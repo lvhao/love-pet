@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8734A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F09D7A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pawGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BBF8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#34D399;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Cloud shape -->
+  <path d="M60 130 C30 130 15 110 15 90 C15 70 30 55 50 55 C50 35 70 20 95 20 C120 20 140 35 140 55 C160 55 175 70 175 90 C175 110 160 130 140 130 Z" fill="url(#cloudGrad)" />
+
+  <!-- Paw pad (main) -->
+  <ellipse cx="95" cy="105" rx="22" ry="18" fill="url(#pawGrad)" />
+
+  <!-- Paw toes -->
+  <ellipse cx="72" cy="82" rx="12" ry="14" fill="url(#pawGrad)" />
+  <ellipse cx="95" cy="72" rx="12" ry="14" fill="url(#pawGrad)" />
+  <ellipse cx="118" cy="82" rx="12" ry="14" fill="url(#pawGrad)" />
+</svg>
