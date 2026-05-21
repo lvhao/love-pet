@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
 import PetAvatar from '../../components/PetAvatar'
@@ -15,6 +16,7 @@ const PET_TYPES = [
 const emptyForm = { name: '', type: 'cat', breed: '', age: '', weight: '', notes: '', vaccine: false }
 
 export default function OwnerPets() {
+  const navigate = useNavigate()
   const { pets, addPet, updatePet, deletePet, addToast } = useStore()
   const [showForm, setShowForm] = useState(false)
   const [editingPet, setEditingPet] = useState(null)
@@ -39,6 +41,7 @@ export default function OwnerPets() {
       weight: pet.weight,
       notes: pet.notes || '',
       vaccine: pet.vaccine || false,
+      photo: pet.photo || '',
     })
     setErrors({})
     setShowForm(true)
@@ -83,11 +86,11 @@ export default function OwnerPets() {
 
   return (
     <>
-      <Layout title="我的宠物">
+      <Layout title="我的宠物" showBack onBack={() => navigate('/owner/profile')}>
         <div className="px-4 py-4 space-y-3">
           {pets.map((pet) => (
             <div key={pet.id} className="shop-card p-4 flex items-center gap-3 overflow-hidden">
-              <PetAvatar type={pet.type} size="lg" />
+              <PetAvatar type={pet.type} photo={pet.photo} name={pet.name} size="lg" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="font-heading font-semibold truncate">{pet.name}</div>

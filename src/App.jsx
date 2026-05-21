@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { StoreProvider } from './data/store'
 import { useRole, RoleProvider } from './hooks/useRole'
 import { CartProvider } from './hooks/useCart'
+import { ThemeProvider } from './hooks/useTheme'
 import ToastContainer from './components/Toast'
 import Chat from './pages/Chat'
 
@@ -23,10 +24,13 @@ const CaretakerDashboard = lazy(() => import('./pages/caretaker/Dashboard'))
 const CaretakerOrderDetail = lazy(() => import('./pages/caretaker/OrderDetail'))
 const CaretakerHistory = lazy(() => import('./pages/caretaker/History'))
 const CaretakerProfile = lazy(() => import('./pages/caretaker/Profile'))
+const CaretakerStatsDetail = lazy(() => import('./pages/caretaker/StatsDetail'))
 const ServiceExecution = lazy(() => import('./pages/caretaker/ServiceExecution'))
 const LiveStream = lazy(() => import('./pages/caretaker/LiveStream'))
 const SubmitReport = lazy(() => import('./pages/caretaker/SubmitReport'))
 const OperatorDashboard = lazy(() => import('./pages/operator/Dashboard'))
+const OperatorData = lazy(() => import('./pages/operator/Data'))
+const OperatorDataDetail = lazy(() => import('./pages/operator/DataDetail'))
 const OperatorProfile = lazy(() => import('./pages/operator/Profile'))
 
 function LoadingFallback() {
@@ -60,6 +64,7 @@ function AppRoutes() {
 
       {/* Caretaker Routes */}
       <Route path="/caretaker" element={<CaretakerDashboard />} />
+      <Route path="/caretaker/stats/:type" element={<CaretakerStatsDetail />} />
       <Route path="/caretaker/history" element={<CaretakerHistory />} />
       <Route path="/caretaker/profile" element={<CaretakerProfile />} />
       <Route path="/caretaker/order/:id" element={<CaretakerOrderDetail />} />
@@ -70,6 +75,8 @@ function AppRoutes() {
 
       {/* Operator Routes */}
       <Route path="/operator" element={<OperatorDashboard />} />
+      <Route path="/operator/data" element={<OperatorData />} />
+      <Route path="/operator/data/:type" element={<OperatorDataDetail />} />
       <Route path="/operator/profile" element={<OperatorProfile />} />
 
       {/* Default redirect based on role */}
@@ -85,10 +92,12 @@ export default function App() {
       <StoreProvider>
         <RoleProvider>
           <CartProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <AppRoutes />
-            </Suspense>
-            <ToastContainer />
+            <ThemeProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <AppRoutes />
+              </Suspense>
+              <ToastContainer />
+            </ThemeProvider>
           </CartProvider>
         </RoleProvider>
       </StoreProvider>

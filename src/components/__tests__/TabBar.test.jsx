@@ -12,6 +12,16 @@ function wrapper({ children }) {
   );
 }
 
+function renderWithPath(path) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <RoleProvider>
+        <TabBar />
+      </RoleProvider>
+    </MemoryRouter>,
+  );
+}
+
 describe('TabBar', () => {
   it('renders owner tabs by default', () => {
     render(<TabBar />, { wrapper });
@@ -25,5 +35,18 @@ describe('TabBar', () => {
     render(<TabBar />, { wrapper });
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(4);
+  });
+
+  it('renders operator management, data and profile tabs', () => {
+    renderWithPath('/operator/data');
+    expect(screen.getByText('管理')).toBeInTheDocument();
+    expect(screen.getByText('数据')).toBeInTheDocument();
+    expect(screen.getByText('我的')).toBeInTheDocument();
+  });
+
+  it('does not mark operator management active on the data page', () => {
+    renderWithPath('/operator/data');
+    expect(screen.getByRole('button', { name: /数据/ })).toHaveClass('app-tab-active');
+    expect(screen.getByRole('button', { name: /管理/ })).not.toHaveClass('app-tab-active');
   });
 });

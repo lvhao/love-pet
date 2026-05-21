@@ -41,10 +41,20 @@ export default function ProductArt({ product, size = 'card' }) {
   const MainIcon = palette.Icon
   const MarkIcon = palette.mark
   const isDetail = size === 'detail'
+  const isThumb = size === 'thumb'
   const brand = product.brand || product.name
+  const image = product.image?.trim()
+
+  if (image) {
+    return (
+      <div className={`shop-product-art shop-product-image ${isDetail ? 'shop-product-art-detail' : ''} ${isThumb ? 'shop-product-art-thumb' : ''}`}>
+        <img src={image} alt={product.name} loading="lazy" />
+      </div>
+    )
+  }
 
   return (
-    <div className={`shop-product-art ${palette.shell} ${isDetail ? 'shop-product-art-detail' : ''}`}>
+    <div className={`shop-product-art ${palette.shell} ${isDetail ? 'shop-product-art-detail' : ''} ${isThumb ? 'shop-product-art-thumb' : ''}`}>
       <div className="shop-art-orbit shop-art-orbit-one" />
       <div className="shop-art-orbit shop-art-orbit-two" />
       <div className="shop-pack-shot" aria-hidden="true">
@@ -66,7 +76,8 @@ ProductArt.propTypes = {
   product: PropTypes.shape({
     brand: PropTypes.string,
     category: PropTypes.string,
+    image: PropTypes.string,
     name: PropTypes.string.isRequired,
   }).isRequired,
-  size: PropTypes.oneOf(['card', 'detail']),
+  size: PropTypes.oneOf(['card', 'detail', 'thumb']),
 }

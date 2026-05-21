@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import PetAvatar from '../../components/PetAvatar'
 import { serviceTypes } from '../../data/mock'
 import { useStore } from '../../data/store'
-import { UtensilsCrossed, Dog, ShowerHead, MapPin, FileText, Check, Video, ChevronDown, Plus, Clock, RotateCcw } from 'lucide-react'
+import { UtensilsCrossed, Dog, ShowerHead, MapPin, FileText, Check, ChevronDown, Plus, Clock } from 'lucide-react'
 
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
@@ -20,10 +20,13 @@ function getNext15Days() {
   for (let i = 0; i < 15; i++) {
     const d = new Date(now)
     d.setDate(now.getDate() + i)
+    const isCurrentMonth = d.getMonth() === now.getMonth()
     days.push({
       value: d.toISOString().slice(0, 10),
       weekday: i === 0 ? '今天' : i === 1 ? '明天' : WEEKDAYS[d.getDay()],
       day: d.getDate(),
+      month: d.getMonth() + 1,
+      showMonth: i > 1 && !isCurrentMonth,
     })
   }
   return days
@@ -44,19 +47,26 @@ function getFirstAvailableTime(dateStr) {
   return ''
 }
 
+function formatDateForSummary(dateStr, dateOptions) {
+  const option = dateOptions.find((d) => d.value === dateStr)
+  if (!option) return ''
+  if (option.weekday === '今天' || option.weekday === '明天') return option.weekday
+  return option.showMonth ? `${option.month}/${option.day}` : `${option.day}日`
+}
+
 const serviceIcons = {
   feeding: UtensilsCrossed,
   feeding_walk: Dog,
   feeding_grooming: ShowerHead,
 }
 
-const serviceColors = {
-  feeding: { bg: 'bg-feeding', light: 'bg-feeding-50', text: 'text-feeding', border: 'border-feeding/30' },
-  feeding_walk: { bg: 'bg-walking', light: 'bg-walking-50', text: 'text-walking', border: 'border-walking/30' },
-  feeding_grooming: { bg: 'bg-grooming', light: 'bg-grooming-50', text: 'text-grooming', border: 'border-grooming/30' },
-}
-
 const FORM_STORAGE_KEY = 'love-pet-new-order-form'
+
+const NOTE_SUGGESTIONS = [
+  '食物和水碗在厨房',
+  '进门请先安抚，不要强抱',
+  '服务完成后请多拍几张照片',
+]
 
 function loadSavedForm() {
   try {
@@ -86,6 +96,15 @@ export default function NewOrder() {
   const [newAddrDetail, setNewAddrDetail] = useState('')
   const [notes, setNotes] = useState(savedForm?.notes ?? '')
   const [errors, setErrors] = useState({})
+  const [showAllTimes, setShowAllTimes] = useState(false)
+  const [activeTimeGroup, setActiveTimeGroup] = useState('all')
+  const [petExpanded, setPetExpanded] = useState(false)
+  const sectionRefs = {
+    service: useRef(null),
+    time: useRef(null),
+    pet: useRef(null),
+    address: useRef(null),
+  }
 
   // Persist form state to localStorage on any field change
   const saveForm = useCallback(() => {
@@ -97,35 +116,38 @@ export default function NewOrder() {
     saveForm()
   }, [saveForm])
 
-  const clearForm = () => {
-    setServiceType('feeding')
-    setPetId(pets[0]?.id || '')
-    setDate(new Date().toISOString().slice(0, 10))
-    setTime(getFirstAvailableTime(new Date().toISOString().slice(0, 10)))
-    setSelectedAddrId(addresses.find((a) => a.isDefault)?.id || addresses[0]?.id || '')
-    setNotes('')
-    setErrors({})
-    localStorage.removeItem(FORM_STORAGE_KEY)
-    addToast('表单已清空', 'info')
-  }
-
   const selectedService = serviceTypes.find((s) => s.key === serviceType)
   const selectedPet = pets.find((p) => p.id === petId)
 
   const dateOptions = useMemo(() => getNext15Days(), [])
 
-  const validate = () => {
+  const getValidationErrors = () => {
     const errs = {}
     if (!petId) errs.pet = '请选择宠物'
     if (!date) errs.date = '请选择日期'
     if (!time) errs.time = '请选择时间'
     if (!selectedAddrId) errs.address = '请选择服务地址'
+    return errs
+  }
+
+  const validate = () => {
+    const errs = getValidationErrors()
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
 
+  const scrollToMissingSection = (errs) => {
+    const firstKey = errs.time || errs.date ? 'time' : errs.pet ? 'pet' : errs.address ? 'address' : 'service'
+    sectionRefs[firstKey]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const handleSubmit = () => {
-    if (!validate()) return
+    const errs = getValidationErrors()
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      scrollToMissingSection(errs)
+      return
+    }
 
     const addr = addresses.find((a) => a.id === selectedAddrId)
     const newOrder = addOrder({
@@ -143,56 +165,66 @@ export default function NewOrder() {
 
     localStorage.removeItem(FORM_STORAGE_KEY)
     addToast('下单成功', 'success')
-    navigate(`/owner/orders/${newOrder.id}`)
+    navigate(`/owner/order/${newOrder.id}`)
   }
+
+  const selectedAddress = addresses.find((a) => a.id === selectedAddrId)
+  const missingCount = [selectedService, selectedPet, date && time, selectedAddress].filter((item) => !item).length
+  const isReady = missingCount === 0
+  const nextMissingLabel = !selectedService
+    ? '请选择服务'
+    : !date || !time
+      ? '请选择上门时间'
+      : !selectedPet
+        ? '请补充宠物资料'
+        : !selectedAddress
+          ? '请补充上门地址'
+          : ''
+  const dateSummary = formatDateForSummary(date, dateOptions)
+  const orderSummary = isReady
+    ? `${selectedService?.label} · ${dateSummary} ${time}`
+    : nextMissingLabel
+
+  const availableTimeGroups = TIME_GROUPS.map((group) => {
+    const now = new Date()
+    const isToday = date === now.toISOString().slice(0, 10)
+    const currentHour = now.getHours()
+    if (isToday && currentHour > group.end) return null
+    const visibleSlots = isToday
+      ? group.slots.filter((slot) => {
+          const [h, m] = slot.split(':').map(Number)
+          return h > currentHour || (h === currentHour && m > now.getMinutes())
+        })
+      : group.slots
+    if (visibleSlots.length === 0) return null
+    return { ...group, slots: visibleSlots }
+  }).filter(Boolean)
+  const recommendedSlots = availableTimeGroups.flatMap((group) => group.slots).slice(0, 6)
+  const displayedTimeGroups = activeTimeGroup === 'all'
+    ? availableTimeGroups
+    : availableTimeGroups.filter((group) => group.label === activeTimeGroup)
 
   return (
     <Layout title="预约上门护理" showBack onBack={() => navigate(-1)}>
-      <div className="order-page px-4 py-4 pb-32 space-y-4">
-        <div className="order-hero p-5">
-          <div className="text-xl font-heading font-bold text-text">给毛孩子安排一次安心照护</div>
-          <div className="mt-1.5 text-sm text-text-secondary leading-relaxed">确认服务、宠物、上门时间和地址，护理师接单后会按流程上门。</div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <div className="order-inner-panel py-2">
-              <div className="text-[11px] text-text-tertiary">服务</div>
-              <div className="text-xs font-semibold text-text mt-0.5 truncate px-1">{selectedService?.label}</div>
-            </div>
-            <div className="order-inner-panel py-2">
-              <div className="text-[11px] text-text-tertiary">宠物</div>
-              <div className="text-xs font-semibold text-text mt-0.5 truncate px-1">{selectedPet?.name || '未选择'}</div>
-            </div>
-            <div className="order-inner-panel py-2">
-              <div className="text-[11px] text-text-tertiary">时间</div>
-              <div className="text-xs font-semibold text-text mt-0.5 truncate px-1">{time || '待定'}</div>
-            </div>
-          </div>
-        </div>
-
+      <div className="order-page px-4 py-3 pb-32 space-y-4">
         {/* Service Type */}
-        <section className="order-section p-5">
-          <div className="flex items-center gap-2.5">
-            <span className="order-step w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-            <h2 className="text-sm font-semibold text-text">选择服务</h2>
+        <section ref={sectionRefs.service} className="order-section p-4 scroll-mt-16">
+          <div>
+            <h2 className="text-base font-semibold text-text">要做什么服务？</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">选一个服务内容，价格会跟随更新</p>
           </div>
           <div className="mt-3 space-y-2">
             {serviceTypes.map((s) => {
               const Icon = serviceIcons[s.key]
-              const sc = serviceColors[s.key]
               const isSelected = serviceType === s.key
               return (
                 <button
                   key={s.key}
                   onClick={() => setServiceType(s.key)}
-                  className={`w-full rounded-2xl p-3.5 flex items-center gap-3.5 active:opacity-80 transition-all cursor-pointer ${
-                    isSelected
-                      ? `order-option-selected ${sc.border}`
-                      : 'order-option'
-                  }`}
+                  className={`w-full rounded-2xl p-3.5 flex items-center gap-3.5 active:opacity-80 transition-all cursor-pointer ${isSelected ? 'order-choice-selected' : 'order-option'}`}
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    isSelected ? sc.bg : 'order-icon-soft'
-                  }`}>
-                    <Icon size={18} className={isSelected ? 'text-white' : sc.text} strokeWidth={2} />
+                  <div className="order-icon-soft w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+                    <Icon size={18} className="text-primary" strokeWidth={1.8} />
                   </div>
                   <div className="flex-1 text-left min-w-0">
                     <div className="text-sm font-semibold text-text">{s.label}</div>
@@ -200,7 +232,7 @@ export default function NewOrder() {
                   </div>
                   <div className="text-base font-bold shop-price">¥{s.price}</div>
                   {isSelected && (
-                    <div className={`w-5 h-5 rounded-full ${sc.bg} flex items-center justify-center shrink-0`}>
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0">
                       <Check size={12} className="text-white" strokeWidth={3} />
                     </div>
                   )}
@@ -210,38 +242,11 @@ export default function NewOrder() {
           </div>
         </section>
 
-        {/* Pet Selection */}
-        <section className="order-section p-5">
-          <div className="flex items-center gap-2.5">
-            <span className="order-step w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-            <h2 className="text-sm font-semibold text-text">选择宠物</h2>
-          </div>
-          <div className="mt-3 flex gap-3">
-            {pets.map((pet) => {
-              const isSelected = petId === pet.id
-              return (
-                <button
-                  key={pet.id}
-                  onClick={() => { setPetId(pet.id); setErrors((p) => ({ ...p, pet: undefined })) }}
-                  className={`flex-1 min-w-0 flex flex-col items-center gap-2 p-4 rounded-2xl active:opacity-80 transition-all cursor-pointer ${
-                    isSelected ? 'order-option-selected' : 'order-option'
-                  }`}
-                >
-                  <PetAvatar type={pet.type} size="md" />
-                  <div className="text-sm font-semibold text-text truncate max-w-full">{pet.name}</div>
-                  <div className="text-[11px] text-text-tertiary truncate max-w-full">{pet.breed}</div>
-                </button>
-              )
-            })}
-          </div>
-          {errors.pet && <div className="text-xs text-danger mt-1">{errors.pet}</div>}
-        </section>
-
         {/* Date & Time */}
-        <section className="order-section p-5">
-          <div className="flex items-center gap-2.5">
-            <span className="order-step w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-            <h2 className="text-sm font-semibold text-text">预约时间</h2>
+        <section ref={sectionRefs.time} className="order-section p-4 scroll-mt-16">
+          <div>
+            <h2 className="text-base font-semibold text-text">什么时候上门？</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">选择方便上门的日期和时段</p>
           </div>
 
           <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -252,6 +257,8 @@ export default function NewOrder() {
                   key={d.value}
                   onClick={() => {
                     setDate(d.value);
+                    setShowAllTimes(false);
+                    setActiveTimeGroup('all');
                     setErrors((p) => ({ ...p, date: undefined, time: undefined }));
                     const allSlots = TIME_GROUPS.flatMap(g => {
                       const now = new Date();
@@ -269,54 +276,101 @@ export default function NewOrder() {
                       setTime(allSlots[0] || '')
                     }
                   }}
-                  className={`shrink-0 w-14 py-2.5 rounded-2xl flex flex-col items-center gap-1 active:scale-95 transition-all cursor-pointer ${
+                  className={`shrink-0 w-[4.25rem] py-2.5 rounded-2xl flex flex-col items-center gap-1 active:opacity-85 transition-colors cursor-pointer ${
                     isSelected
-                      ? 'order-option-selected'
+                      ? 'order-choice-selected'
                       : 'order-option'
                   }`}
                 >
                   <span className="text-[10px] font-medium leading-none text-text-tertiary">{d.weekday}</span>
-                  <span className="text-base font-heading leading-tight text-text">{d.day}</span>
+                  <span className="text-base font-heading leading-tight text-text">
+                    {d.showMonth ? `${d.month}/${d.day}` : d.day}
+                  </span>
                 </button>
               )
             })}
           </div>
           {errors.date && <div className="text-xs text-danger mt-1">{errors.date}</div>}
 
-          {/* Time range hint */}
           <div className="mt-3 flex items-center gap-1.5 text-xs text-text-tertiary">
             <Clock size={12} />
             <span>可接单时段：08:00 - 21:00</span>
           </div>
 
-          {/* Time picker — grouped by morning/afternoon/evening */}
-          <div className="mt-4 space-y-3">
-            {TIME_GROUPS.map((group) => {
-              const now = new Date()
-              const isToday = date === now.toISOString().slice(0, 10)
-              const currentHour = now.getHours()
-              // Hide entire group if today and all slots have passed
-              if (isToday && currentHour > group.end) return null
-              const visibleSlots = isToday
-                ? group.slots.filter((s) => {
-                    const [h, m] = s.split(':').map(Number)
-                    return h > currentHour || (h === currentHour && m > now.getMinutes())
-                  })
-                : group.slots
-              if (visibleSlots.length === 0) return null
-              return (
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-semibold text-text-secondary">
+                  {showAllTimes ? '选择具体时段' : '最快可约'}
+                </div>
+                <div className="mt-0.5 text-[11px] text-text-tertiary">
+                  {showAllTimes ? '按上门时间段快速定位' : '以下时间当前可约，点选即可'}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAllTimes((value) => !value)}
+                className="text-xs font-medium text-primary active:opacity-70 transition-opacity cursor-pointer"
+              >
+                {showAllTimes ? '收起' : '更多时段'}
+              </button>
+            </div>
+            {!showAllTimes && (
+              <div className="grid grid-cols-3 gap-2">
+                {recommendedSlots.map((slot) => {
+                  const isSelected = time === slot
+                  return (
+                    <button
+                      key={slot}
+                      onClick={() => { setTime(slot); setErrors((p) => ({ ...p, time: undefined })) }}
+                      className={`py-2 rounded-lg text-sm font-medium active:opacity-85 transition-colors cursor-pointer ${isSelected ? 'order-choice-selected' : 'order-option'}`}
+                    >
+                      {slot}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {showAllTimes && (
+            <div className="mt-4 space-y-3">
+              <div className="shop-chip-wrap">
+                <button
+                  onClick={() => setActiveTimeGroup('all')}
+                  className={`shop-chip px-3 py-1.5 rounded-full text-xs font-semibold active:opacity-70 transition-all cursor-pointer ${
+                    activeTimeGroup === 'all' ? 'shop-chip-active' : 'shop-chip-idle text-text-secondary'
+                  }`}
+                >
+                  全部
+                </button>
+                {availableTimeGroups.map((group) => (
+                  <button
+                    key={group.label}
+                    onClick={() => setActiveTimeGroup(group.label)}
+                    className={`shop-chip px-3 py-1.5 rounded-full text-xs font-semibold active:opacity-70 transition-all cursor-pointer ${
+                      activeTimeGroup === group.label ? 'shop-chip-active' : 'shop-chip-idle text-text-secondary'
+                    }`}
+                  >
+                    {group.label.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+              {displayedTimeGroups.map((group) => (
                 <div key={group.label}>
-                  <div className="text-xs text-text-tertiary font-medium mb-1.5">{group.label}</div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="text-xs text-text-tertiary font-medium">{group.label}</div>
+                    <div className="text-[11px] text-text-tertiary">{group.slots.length} 个可约</div>
+                  </div>
                   <div className="grid grid-cols-4 gap-2">
-                    {visibleSlots.map((slot) => {
+                    {group.slots.map((slot) => {
                       const isSelected = time === slot
                       return (
                         <button
                           key={slot}
                           onClick={() => { setTime(slot); setErrors((p) => ({ ...p, time: undefined })) }}
-                          className={`py-2 rounded-lg text-sm font-medium active:scale-95 transition-all cursor-pointer ${
+                          className={`py-2 rounded-lg text-sm font-medium active:opacity-85 transition-colors cursor-pointer ${
                             isSelected
-                              ? 'order-option-selected'
+                              ? 'order-choice-selected'
                               : 'order-option'
                           }`}
                         >
@@ -326,17 +380,84 @@ export default function NewOrder() {
                     })}
                   </div>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          )}
           {errors.time && <div className="text-xs text-danger mt-1">{errors.time}</div>}
         </section>
 
+        {/* Pet Selection */}
+        <section ref={sectionRefs.pet} className="order-section p-4 scroll-mt-16">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-text">照护对象</h2>
+              <p className="mt-0.5 text-xs text-text-tertiary">默认使用当前宠物</p>
+            </div>
+            {pets.length > 1 && (
+              <button
+                onClick={() => setPetExpanded((value) => !value)}
+                className="text-xs font-medium text-primary active:opacity-70 transition-opacity cursor-pointer"
+              >
+                {petExpanded ? '收起' : '更换'}
+              </button>
+            )}
+          </div>
+          {!petExpanded && (
+            <div className="mt-3 order-inner-panel flex w-full items-center gap-3 p-3.5">
+              <PetAvatar
+                type={selectedPet?.type || 'cat'}
+                photo={selectedPet?.photo || ''}
+                name={selectedPet?.name || '宠物'}
+                size="md"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-text truncate">{selectedPet?.name || '未添加宠物'}</div>
+                <div className="text-xs text-text-tertiary truncate">{selectedPet?.breed || '请先添加宠物信息'}</div>
+              </div>
+            </div>
+          )}
+          {petExpanded && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {pets.map((pet) => {
+                const isSelected = petId === pet.id
+                return (
+                  <button
+                    key={pet.id}
+                    onClick={() => {
+                      setPetId(pet.id)
+                      setPetExpanded(false)
+                      setErrors((p) => ({ ...p, pet: undefined }))
+                    }}
+                    className={`min-w-0 flex flex-col items-center gap-2 p-4 rounded-2xl active:opacity-80 transition-all cursor-pointer ${
+                      isSelected ? 'order-option-selected' : 'order-option'
+                    }`}
+                  >
+                    <PetAvatar type={pet.type} photo={pet.photo} name={pet.name} size="md" />
+                    <div className="text-sm font-semibold text-text truncate max-w-full">{pet.name}</div>
+                    <div className="text-[11px] text-text-tertiary truncate max-w-full">{pet.breed}</div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {errors.pet && <div className="text-xs text-danger mt-1">{errors.pet}</div>}
+        </section>
+
         {/* Address */}
-        <section className="order-section p-5">
-          <div className="flex items-center gap-2.5">
-            <span className="order-step w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">4</span>
-            <h2 className="text-sm font-semibold text-text">服务地址</h2>
+        <section ref={sectionRefs.address} className="order-section p-4 scroll-mt-16">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-text">上门到哪里？</h2>
+              <p className="mt-0.5 text-xs text-text-tertiary">默认使用常用地址</p>
+            </div>
+            {addresses.length > 1 && (
+              <button
+                onClick={() => { setAddrExpanded((value) => !value); setShowNewAddrForm(false) }}
+                className="text-xs font-medium text-primary active:opacity-70 transition-opacity cursor-pointer"
+              >
+                {addrExpanded ? '收起' : '更换'}
+              </button>
+            )}
           </div>
           <div className="mt-3">
             {/* Collapsed: show selected address */}
@@ -344,8 +465,11 @@ export default function NewOrder() {
               const addr = addresses.find((a) => a.id === selectedAddrId)
               return addr ? (
                 <button
-                  onClick={() => { setAddrExpanded(true); setErrors((p) => ({ ...p, address: undefined })) }}
-                  className="w-full order-inner-panel p-4 flex items-start gap-3 active:opacity-80 transition-opacity cursor-pointer text-left"
+                  onClick={() => {
+                    if (addresses.length > 1) setAddrExpanded(true)
+                    setErrors((p) => ({ ...p, address: undefined }))
+                  }}
+                  className={`w-full order-inner-panel p-4 flex items-start gap-3 text-left ${addresses.length > 1 ? 'active:opacity-80 transition-opacity cursor-pointer' : ''}`}
                 >
                   <MapPin size={18} className="text-primary mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -356,7 +480,7 @@ export default function NewOrder() {
                     </div>
                     <div className="text-xs text-text-secondary mt-1">{addr.address}</div>
                   </div>
-                  <ChevronDown size={16} className="text-text-tertiary mt-1 flex-shrink-0" />
+                  {addresses.length > 1 && <ChevronDown size={16} className="text-text-tertiary mt-1 flex-shrink-0" />}
                 </button>
               ) : null
             })()}
@@ -395,6 +519,16 @@ export default function NewOrder() {
                   新增地址
                 </button>
               </div>
+            )}
+
+            {!addrExpanded && !showNewAddrForm && addresses.length <= 1 && (
+              <button
+                onClick={() => setShowNewAddrForm(true)}
+                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary active:opacity-80 transition-opacity cursor-pointer"
+              >
+                <Plus size={14} />
+                新增或修改地址
+              </button>
             )}
 
             {/* New address form */}
@@ -458,10 +592,21 @@ export default function NewOrder() {
         </section>
 
         {/* Notes */}
-        <section className="order-section p-5">
-          <div className="flex items-center gap-2.5">
-            <span className="order-step w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">5</span>
-            <h2 className="text-sm font-semibold text-text">服务备注</h2>
+        <section className="order-section p-4">
+          <div>
+            <h2 className="text-base font-semibold text-text">还有什么要嘱咐？</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">可选，护理师上门前会优先查看</p>
+          </div>
+          <div className="shop-chip-wrap mt-3 pb-1">
+            {NOTE_SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => setNotes((current) => current ? `${current}\n${suggestion}` : suggestion)}
+                className="rounded-full shop-secondary-action px-3 py-1.5 text-xs font-medium active:opacity-80 transition-opacity cursor-pointer"
+              >
+                {suggestion}
+              </button>
+            ))}
           </div>
           <div className="mt-3 relative">
             <FileText size={14} className="absolute left-3 top-3 text-text-tertiary" />
@@ -477,29 +622,21 @@ export default function NewOrder() {
 
         <div className="order-submit-bar fixed left-0 right-0 bottom-0 z-40 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-lg flex items-center gap-3">
-            <div>
-              <div className="text-[11px] text-text-tertiary">预计费用</div>
-              <div className="text-2xl font-heading shop-price tracking-tight">¥{selectedService?.price}</div>
-              <div className="text-xs text-text-secondary mt-1 flex items-center gap-1">
-                <Video size={12} className="text-primary" />
-                含看护直播
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[11px] text-text-tertiary">合计</span>
+                <span className="text-2xl font-heading shop-price tracking-tight">¥{selectedService?.price}</span>
+              </div>
+              <div className="mt-0.5 truncate text-xs font-medium text-text-secondary">
+                {orderSummary}
               </div>
             </div>
-            <div className="ml-auto flex gap-2">
-              <button
-                onClick={clearForm}
-                className="w-11 h-11 rounded-full shop-secondary-action active:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
-                aria-label="清空表单"
-              >
-                <RotateCcw size={17} />
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="btn-primary font-semibold px-5 py-3 rounded-full text-sm active:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
-              >
-                给{selectedPet?.name || '毛孩子'}安排上
-              </button>
-            </div>
+            <button
+              onClick={handleSubmit}
+              className="btn-primary h-11 rounded-full px-6 text-sm font-semibold active:opacity-80 transition-opacity cursor-pointer whitespace-nowrap"
+            >
+              {isReady ? '确认下单' : '补齐信息'}
+            </button>
           </div>
         </div>
       </div>

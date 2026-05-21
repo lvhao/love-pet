@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
+import ThemeToggle from '../../components/ThemeToggle'
 import { useRole } from '../../hooks/useRole'
 import { useStore } from '../../data/store'
 import { Star, ChevronRight, Briefcase, Wallet, Award, HelpCircle, Info } from 'lucide-react'
@@ -45,6 +46,7 @@ export default function CaretakerProfile() {
           </div>
 
           <div className="shop-card divide-y divide-border overflow-hidden">
+            <ThemeToggle />
             {menuItems.map(({ Icon, label, action }) => (
               <button
                 key={label}

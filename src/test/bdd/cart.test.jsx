@@ -10,6 +10,7 @@ import Cart from '../../pages/owner/Cart'
 import { mockProducts } from '../../data/shop'
 
 let cartCount = 0
+let cartSeed = []
 
 async function firstAddButton() {
   const buttons = await screen.findAllByLabelText(/^添加/)
@@ -18,6 +19,7 @@ async function firstAddButton() {
 
 function renderShop() {
   cartCount = 0
+  cartSeed = []
   cleanup()
   localStorage.removeItem('cart')
   localStorage.removeItem('love-pet-cart')
@@ -36,6 +38,7 @@ function renderShop() {
 
 function renderCart() {
   cleanup()
+  localStorage.setItem('cart', JSON.stringify(cartSeed))
   return render(
     <MemoryRouter initialEntries={['/owner/cart']}>
       <StoreProvider>
@@ -50,29 +53,30 @@ function renderCart() {
 }
 
 given('我在商城页面', () => { renderShop() })
+given('我准备测试购物车页面', () => {
+  cleanup()
+  cartSeed = []
+  localStorage.removeItem('cart')
+  localStorage.removeItem('love-pet-cart')
+})
 given('我进入购物车页面', () => { renderCart() })
 given(/^购物车中有 (\d+) 件商品$/, async (n) => {
-  renderShop()
-  const btn = await firstAddButton()
-  for (let i = 0; i < parseInt(n); i++) fireEvent.click(btn)
+  cleanup()
+  cartSeed = [{ ...mockProducts[0], quantity: parseInt(n) }]
 })
 given('购物车中有商品', async () => {
-  renderShop()
-  const btn = await firstAddButton()
-  fireEvent.click(btn)
+  cleanup()
+  cartSeed = [{ ...mockProducts[0], quantity: 1 }]
 })
 given(/^购物车中有商品总价低于 (\d+) 元$/, async (price) => {
-  renderShop()
   const cheapProduct = mockProducts.find((p) => p.price < parseInt(price))
-  const idx = mockProducts.indexOf(cheapProduct)
-  const btn = (await screen.findAllByLabelText(/^添加/))[idx]
-  fireEvent.click(btn)
+  cleanup()
+  cartSeed = [{ ...cheapProduct, quantity: 1 }]
 })
 given(/^购物车中有商品总价不低于 (\d+) 元$/, async (price) => {
-  renderShop()
-  const btn = await firstAddButton()
-  fireEvent.click(btn)
-  fireEvent.click(btn)
+  const product = mockProducts.find((p) => p.price >= parseInt(price)) || mockProducts[0]
+  cleanup()
+  cartSeed = [{ ...product, quantity: 1 }]
 })
 
 when('我点击商品的加购按钮', async () => {
@@ -96,12 +100,12 @@ when(/^我将数量改为 (\d+)$/, (n) => {
 })
 when('我选择"上门配送"', () => {
   renderCart()
-  const doorBtn = screen.getByText('上门配送')
+  const doorBtn = screen.getByRole('button', { name: '选择上门配送' })
   fireEvent.click(doorBtn)
 })
 when('我选择"快递邮寄"', () => {
   renderCart()
-  const expressBtn = screen.getByText('快递邮寄')
+  const expressBtn = screen.getByRole('button', { name: '选择快递邮寄' })
   fireEvent.click(expressBtn)
 })
 
@@ -121,13 +125,21 @@ then(/^商品数量显示为 (\d+)$/, (n) => {
   expect(screen.getByText(String(n))).toBeInTheDocument()
 })
 then('小计价格更新', () => {
-  expect(true).toBe(true)
+  expect(screen.getByTestId('cart-subtotal')).toHaveTextContent('¥504')
+  expect(screen.getByTestId('cart-summary-total')).toHaveTextContent('¥504')
+  expect(screen.getByTestId('cart-bottom-total')).toHaveTextContent('¥504')
 })
-then(/^运费为 (\d+)$/, (fee) => {
-  expect(parseInt(fee)).toBe(parseInt(fee))
+then(/^运费为 (\d+)$/, async (fee) => {
+  const expected = parseInt(fee)
+  await waitFor(() => {
+    expect(screen.getByTestId('cart-delivery-fee')).toHaveTextContent(expected === 0 ? '免邮' : `¥${expected}`)
+  })
 })
-then(/^运费为 (\d+) 元$/, (fee) => {
-  expect(parseInt(fee)).toBe(parseInt(fee))
+then(/^运费为 (\d+) 元$/, async (fee) => {
+  const expected = parseInt(fee)
+  await waitFor(() => {
+    expect(screen.getByTestId('cart-delivery-fee')).toHaveTextContent(expected === 0 ? '免邮' : `¥${expected}`)
+  })
 })
 
 runFeature(`
@@ -135,13 +147,15 @@ Feature: 购物车管理
   作为宠主，我想管理购物车中的商品，以便在结算前调整购买内容。
 
   Background:
-    Given 我在商城页面
+    Given 我准备测试购物车页面
 
   Scenario: 添加商品到购物车
+    Given 我在商城页面
     When 我点击商品的加购按钮
     Then 购物车图标显示数量为 1
 
   Scenario: 添加同一商品多次
+    Given 我在商城页面
     When 我点击同一商品的加购按钮 2 次
     Then 购物车图标显示数量为 2
 

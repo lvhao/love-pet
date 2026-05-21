@@ -93,9 +93,25 @@ export const productCategories = [
   { key: 'dog_toy', label: '狗玩具' },
 ]
 
+export const FREE_EXPRESS_THRESHOLD = 99
+export const EXPRESS_DELIVERY_FEE = 8
+
+export function getDeliveryFee(deliveryType, totalPrice) {
+  if (deliveryType === 'door') return 0
+  if (totalPrice >= FREE_EXPRESS_THRESHOLD) return 0
+  return EXPRESS_DELIVERY_FEE
+}
+
+export function getDeliveryDesc(deliveryType, totalPrice = 0) {
+  if (deliveryType === 'door') return '护理师下次上门时顺便带，免邮费'
+  return totalPrice >= FREE_EXPRESS_THRESHOLD
+    ? '快递邮寄，已满99元免邮'
+    : `快递邮寄，满99元免邮，未满加${EXPRESS_DELIVERY_FEE}元运费`
+}
+
 export const deliveryTypes = [
-  { key: 'door', label: '上门配送', desc: '护理师下次上门时顺便带，免邮费', price: 0, icon: 'DoorOpen' },
-  { key: 'express', label: '快递邮寄', desc: '3-5个工作日送达', price: 8, icon: 'Truck' },
+  { key: 'door', label: '上门配送', desc: '护理师下次上门时顺便带，免邮费', icon: 'DoorOpen' },
+  { key: 'express', label: '快递邮寄', desc: '满99元免邮，未满加8元运费', icon: 'Truck' },
 ]
 
 export const mockOperator = {

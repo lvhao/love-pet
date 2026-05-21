@@ -8,11 +8,22 @@ const colorMap = {
   fish: { bg: 'bg-primary-50', text: 'text-primary' },
 }
 
-export default function PetAvatar({ type = 'cat', size = 'md' }) {
+export default function PetAvatar({ type = 'cat', size = 'md', photo = '', name = '宠物' }) {
   const sizes = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-14 h-14' }
   const iconSizes = { sm: 14, md: 18, lg: 24 }
   const Icon = iconMap[type] || PawPrint
   const colors = colorMap[type] || colorMap.cat
+
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name}
+        className={`${sizes[size]} rounded-lg object-cover border border-white/80 shadow-sm`}
+        loading="lazy"
+      />
+    )
+  }
 
   return (
     <div className={`${sizes[size]} rounded-lg ${colors.bg} flex items-center justify-center`}>

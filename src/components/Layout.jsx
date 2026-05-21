@@ -6,7 +6,12 @@ export default function Layout({ children, title, showBack = false, onBack, righ
       <header className="app-header sticky top-0 z-50 flex items-center justify-between px-4 h-12 bg-surface/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-2 w-10">
           {showBack && (
-            <button onClick={onBack} className="app-icon-button w-9 h-9 flex items-center justify-center -ml-2 active:opacity-50 transition-opacity cursor-pointer">
+            <button
+              onClick={onBack}
+              className="app-icon-button w-9 h-9 flex items-center justify-center -ml-2 active:opacity-50 transition-opacity cursor-pointer"
+              aria-label="返回"
+              title="返回"
+            >
               <ArrowLeft size={20} className="text-text" />
             </button>
           )}

@@ -3,14 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import PetAvatar from '../../components/PetAvatar'
 import StatusBadge from '../../components/StatusBadge'
-import { statusLabels } from '../../data/mock'
+import { serviceTypes, statusLabels } from '../../data/mock'
 import { useStore } from '../../data/store'
 import { Video, FileText, MapPin, User, CreditCard, MessageCircle, X } from 'lucide-react'
 
 export default function OrderDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { orders, cancelOrder, addToast } = useStore()
+  const { orders, pets, cancelOrder, addToast } = useStore()
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   const order = orders.find((o) => o.id === id)
@@ -40,6 +40,8 @@ export default function OrderDetail() {
   const canCancel = ['pending', 'accepted'].includes(order.status)
   const hasCaretaker = !!order.caretakerName
   const isCompleted = order.status === 'completed'
+  const serviceLabel = serviceTypes.find((service) => service.key === order.serviceType)?.label || '上门护理'
+  const pet = pets.find((item) => item.id === order.petId)
 
   const handleCancel = () => {
     const success = cancelOrder(order.id)
@@ -58,15 +60,22 @@ export default function OrderDetail() {
   return (
     <Layout title="订单详情" showBack onBack={() => navigate(-1)}>
       <div className="px-4 py-4 space-y-4">
-        {/* Pet & Status */}
+        {/* Order Summary */}
         <div className="shop-card p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <PetAvatar type={order.petName === '团子' ? 'cat' : 'dog'} />
-            <div className="flex-1">
-              <div className="font-heading text-[17px]">{order.petName}</div>
-              <div className="text-xs text-text-secondary mt-0.5">{order.scheduledAt}</div>
+          <div className="flex items-start gap-3 mb-4">
+            <PetAvatar type={pet?.type || 'cat'} photo={pet?.photo || ''} name={order.petName} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-heading text-[17px] truncate">{serviceLabel}</div>
+                  <div className="text-xs text-text-secondary mt-0.5 truncate">{order.petName} · {order.scheduledAt}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-lg font-heading font-bold shop-price">¥{order.price}</div>
+                  <StatusBadge status={order.status} />
+                </div>
+              </div>
             </div>
-            <StatusBadge status={order.status} />
           </div>
 
           {/* Timeline */}
@@ -138,10 +147,9 @@ export default function OrderDetail() {
           <h3 className="text-sm font-semibold text-text mb-4">订单信息</h3>
           <div className="space-y-3">
             {[
-              { Icon: CreditCard, label: '你想让护理师做什么？', value: order.serviceType === 'feeding' ? '上门喂养' : order.serviceType === 'feeding_walk' ? '喂养+遛狗' : '喂养+洗护' },
-              { Icon: MapPin, label: '去哪里找毛孩子？', value: order.address },
-              { Icon: User, label: '护理师', value: order.caretakerName || '等待分配' },
-              { Icon: CreditCard, label: '订单金额', value: `¥${order.price}`, highlight: true },
+              { Icon: CreditCard, label: '服务内容', value: serviceLabel },
+              { Icon: MapPin, label: '上门地址', value: order.address },
+              { Icon: User, label: '护理师', value: order.caretakerName || '等待护理师接单' },
             ].map(({ Icon, label, value, highlight }) => (
               <div key={label} className="flex items-center gap-3">
                 <Icon size={14} className="text-text-tertiary" />

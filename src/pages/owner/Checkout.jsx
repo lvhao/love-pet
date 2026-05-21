@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
+import ProductArt from '../../components/ProductArt'
 import { useStore } from '../../data/store'
+import { useCart } from '../../hooks/useCart'
 import { CheckCircle, XCircle, DoorOpen, Truck, CreditCard, RefreshCw } from 'lucide-react'
 
 const productCategoryColors = {
@@ -13,7 +15,8 @@ const productCategoryColors = {
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { cartItems: items, deliveryType, totalPrice, deliveryFee, finalPrice, clearCart, addOrder, addToast } = useStore()
+  const { addOrder } = useStore()
+  const { items, deliveryType, totalPrice, deliveryFee, finalPrice, clearCart } = useCart()
   const [paying, setPaying] = useState(false)
   const [paid, setPaid] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -38,6 +41,9 @@ export default function Checkout() {
         items: items.map((item) => ({
           id: item.id,
           name: item.name,
+          brand: item.brand,
+          category: item.category,
+          image: item.image,
           price: item.price,
           quantity: item.quantity,
         })),
@@ -135,8 +141,12 @@ export default function Checkout() {
             const pc = productCategoryColors[item.category] || productCategoryColors.cat_food
             return (
               <div key={item.id} className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${pc.from} ${pc.to} flex items-center justify-center`}>
-                  <span className={`text-xs font-heading font-bold ${pc.text} opacity-30`}>{item.brand[0]}</span>
+                <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br ${pc.from} ${pc.to} flex items-center justify-center`}>
+                  {item.image ? (
+                    <ProductArt product={item} size="thumb" />
+                  ) : (
+                    <span className={`text-xs font-heading font-bold ${pc.text} opacity-30`}>{item.brand?.[0] || item.name[0]}</span>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{item.name}</div>

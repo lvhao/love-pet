@@ -30,9 +30,10 @@ describe('OwnerProfile', () => {
 
   it('renders menu items', () => {
     render(<OwnerProfile />, { wrapper });
+    expect(screen.getByText('夜间模式')).toBeInTheDocument();
     expect(screen.getByText('我的订单')).toBeInTheDocument();
-    expect(screen.getByText('我的宠物')).toBeInTheDocument();
-    expect(screen.getByText('地址管理')).toBeInTheDocument();
+    expect(screen.getByText('宠物资料')).toBeInTheDocument();
+    expect(screen.getByText('常用地址')).toBeInTheDocument();
   });
 
   it('renders logout button', () => {
