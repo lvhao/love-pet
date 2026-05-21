@@ -20,7 +20,7 @@ export default function OwnerProfile() {
     { Icon: Gift, label: '优惠券', action: () => addToast('优惠券功能即将上线') },
     { Icon: MapPin, label: '地址管理', path: '/owner/addresses' },
     { Icon: HelpCircle, label: '帮助中心', action: () => addToast('帮助中心即将上线') },
-    { Icon: Info, label: '关于宠上门', action: () => addToast('关于页面即将上线') },
+    { Icon: Info, label: '关于宠管家', action: () => addToast('关于页面即将上线') },
   ]
 
   const handleLogout = () => {

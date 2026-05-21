@@ -40,37 +40,36 @@ export default function OwnerHome() {
       <Layout title="宠管家">
         <RoleSwitcher />
 
-        {/* Hero */}
-        <div className="shop-promo mx-4 mt-3 relative overflow-hidden">
+        {/* Quick action */}
+        <div className="owner-quick-card shop-promo mx-4 mt-3 relative overflow-hidden">
           <div className="shop-art-orbit shop-art-orbit-one" />
-          <div className="shop-art-orbit shop-art-orbit-two" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Logo size="sm" />
-            <span className="text-[22px] font-semibold shop-price">宠管家</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-[18px] font-semibold text-text leading-tight">上门照护，一键安排</div>
+              <p className="text-[12px] text-text-secondary mt-1 truncate">喂养、遛狗、洗护，全程可看</p>
+            </div>
+            <button
+              onClick={() => navigate('/owner/order/new')}
+              className="btn-primary font-semibold px-4 py-2.5 rounded-xl text-[13px] active:opacity-80 transition-opacity cursor-pointer card-shadow-sm shrink-0"
+            >
+              立即下单
+            </button>
           </div>
-          <p className="text-[13px] text-text-secondary mt-1">让你看见爱在发生</p>
-          <button
-            onClick={() => navigate('/owner/order/new')}
-            className="mt-4 btn-primary font-medium px-5 py-2 rounded-lg text-[14px] active:opacity-80 transition-opacity cursor-pointer card-shadow-sm"
-          >
-            立即下单
-          </button>
-        </div>
-
-        {/* Trust */}
-        <div className="mx-4 mt-4 flex items-center gap-3 text-[12px] text-text-secondary">
-          <div className="shop-chip-idle flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <Video size={13} className="text-primary" />
-            <span>实时看护</span>
-          </div>
-          <div className="shop-chip-idle flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <ShieldCheck size={13} className="text-primary" />
-            <span>专业SOP服务</span>
+          <div className="owner-trust-row mt-3 grid grid-cols-2 gap-2 text-[12px] text-text-secondary">
+            <div className="shop-chip-idle flex items-center gap-1.5 rounded-xl px-2.5 py-1.5">
+              <Video size={13} className="text-primary" />
+              <span>实时看护</span>
+            </div>
+            <div className="shop-chip-idle flex items-center gap-1.5 rounded-xl px-2.5 py-1.5">
+              <ShieldCheck size={13} className="text-primary" />
+              <span>专业SOP服务</span>
+            </div>
           </div>
         </div>
 
         {/* Service Types */}
-        <div className="px-4 mt-6">
+        <div className="px-4 mt-5">
           <h3 className="text-[17px] font-semibold">今天需要什么帮助？</h3>
           {loading ? (
             <div className="mt-3 space-y-2">

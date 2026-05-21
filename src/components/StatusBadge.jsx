@@ -2,11 +2,12 @@ import { statusLabels, statusColors } from '../data/mock'
 import PropTypes from 'prop-types'
 
 const statusClassNames = {
-  pending: 'bg-gray-100',
-  accepted: 'bg-blue-100',
-  in_progress: 'bg-yellow-100',
-  completed: 'bg-green-100',
-  cancelled: 'bg-red-100',
+  pending: 'bg-gray-100 status-pending',
+  accepted: 'bg-blue-100 status-accepted',
+  in_progress: 'bg-yellow-100 status-progress',
+  streaming: 'bg-red-100 status-streaming',
+  completed: 'bg-green-100 status-completed',
+  cancelled: 'bg-red-100 status-cancelled',
 }
 
 export default function StatusBadge({ status }) {
@@ -14,7 +15,7 @@ export default function StatusBadge({ status }) {
   const color = statusColors[status] || statusColors.pending
   return (
     <span
-      className={`px-2 py-0.5 rounded text-[11px] font-medium ${statusClassNames[status] || 'bg-gray-100'}`}
+      className={`status-badge px-2 py-0.5 rounded-full text-[11px] font-semibold ${statusClassNames[status] || 'status-pending'}`}
       style={{ color, background: `${color}1a` }}
     >
       {label}

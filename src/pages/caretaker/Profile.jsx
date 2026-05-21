@@ -15,7 +15,7 @@ export default function CaretakerProfile() {
     { Icon: Wallet, label: '收入明细', action: () => addToast('收入明细功能即将上线', 'info') },
     { Icon: Award, label: '技能认证', action: () => addToast('技能认证功能即将上线', 'info') },
     { Icon: HelpCircle, label: '帮助中心', action: () => addToast('帮助中心即将上线', 'info') },
-    { Icon: Info, label: '关于宠上门', action: () => addToast('关于页面即将上线', 'info') },
+    { Icon: Info, label: '关于宠管家', action: () => addToast('关于页面即将上线', 'info') },
   ]
 
   return (

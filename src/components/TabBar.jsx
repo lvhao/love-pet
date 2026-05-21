@@ -27,7 +27,7 @@ export default function TabBar() {
   const tabs = role === 'owner' ? ownerTabs : role === 'caretaker' ? caretakerTabs : operatorTabs
 
   return (
-    <nav className="app-tabbar sticky bottom-0 z-50 bg-surface border-t border-border flex pb-[env(safe-area-inset-bottom)]">
+    <nav className="app-tabbar sticky bottom-0 z-50 bg-surface border-t border-border flex px-1.5 pb-[env(safe-area-inset-bottom)]">
       {tabs.map(({ path, label, Icon }, index) => {
         const active = index === 0
           ? location.pathname === path
@@ -36,7 +36,7 @@ export default function TabBar() {
           <button
             key={path}
             onClick={() => navigate(path)}
-            className={`flex-1 flex flex-col items-center py-1.5 cursor-pointer ${
+            className={`flex-1 flex flex-col items-center py-2 cursor-pointer transition-colors ${
               active ? 'app-tab-active' : 'text-text-tertiary'
             }`}
           >
