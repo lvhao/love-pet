@@ -32,7 +32,7 @@ export default function TabBar() {
 
   return (
     <nav className="app-tabbar sticky bottom-0 z-50 bg-surface border-t border-border flex px-1.5 pb-[env(safe-area-inset-bottom)]">
-      {tabs.map(({ path, label, Icon }, index) => {
+      {tabs.map(({ path, label, Icon }) => {
         const active = activePath === path
         return (
           <button

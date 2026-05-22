@@ -130,12 +130,6 @@ export default function NewOrder() {
     return errs
   }
 
-  const validate = () => {
-    const errs = getValidationErrors()
-    setErrors(errs)
-    return Object.keys(errs).length === 0
-  }
-
   const scrollToMissingSection = (errs) => {
     const firstKey = errs.time || errs.date ? 'time' : errs.pet ? 'pet' : errs.address ? 'address' : 'service'
     sectionRefs[firstKey]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })

@@ -179,13 +179,11 @@ export function useWebRTC(roomId) {
     setCameraError(null)
   }, [localStream])
 
-  useEffect(() => {
-    return () => {
-      localStream?.getTracks().forEach((t) => t.stop())
-      pcRef.current?.close()
-      wsRef.current?.close()
-    }
-  }, [])
+  useEffect(() => () => {
+    localStream?.getTracks().forEach((t) => t.stop())
+    pcRef.current?.close()
+    wsRef.current?.close()
+  }, [localStream])
 
   return {
     localStream,

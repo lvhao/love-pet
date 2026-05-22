@@ -74,7 +74,6 @@ CartProvider.propTypes = {
   children: PropTypes.node.isRequired,
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const cart = useContext(CartContext)
   const fallbackCart = useCartState()

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { RoleProvider, useRole } from '../../hooks/useRole';
+import { RoleProvider } from '../../hooks/useRole';
 import Layout from '../Layout';
 
 describe('Layout', () => {

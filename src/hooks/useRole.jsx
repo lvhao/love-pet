@@ -18,8 +18,8 @@ export function RoleProvider({ children }) {
 
   useEffect(() => {
     const pathRole = location.pathname.split('/')[1]
-    if (['owner', 'caretaker', 'operator'].includes(pathRole) && pathRole !== role) {
-      setRole(pathRole)
+    if (['owner', 'caretaker', 'operator'].includes(pathRole)) {
+      setRole((currentRole) => (pathRole === currentRole ? currentRole : pathRole))
     }
   }, [location.pathname])
 

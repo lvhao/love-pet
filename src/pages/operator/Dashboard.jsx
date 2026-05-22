@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
 import RoleSwitcher from '../../components/RoleSwitcher'
@@ -7,7 +8,7 @@ import { productCategories } from '../../data/shop'
 import { mockCaretakerApplications, mockComplaints, serviceTypes } from '../../data/mock'
 import ProductArt from '../../components/ProductArt'
 import StatusBadge from '../../components/StatusBadge'
-import { Plus, Edit3, Trash2, X, Image as ImageIcon, UserCheck, AlertCircle, Clock, MessageCircle, Package, Truck, ArchiveRestore } from 'lucide-react'
+import { Plus, Edit3, Trash2, X, Image as ImageIcon, UserCheck, AlertCircle, Clock, MessageCircle, Package, Truck, ArchiveRestore, CheckCircle2, FileText, PhoneCall, Send, ShieldAlert } from 'lucide-react'
 
 const productCategoryColors = {
   cat_food: { from: 'from-feeding-50', to: 'to-primary-50', text: 'text-feeding' },
@@ -73,6 +74,80 @@ function getOrderAttention(order) {
 
 const ORDER_STATUS_PRIORITY = { pending: 0, accepted: 1, in_progress: 2, streaming: 3, completed: 4, cancelled: 5 }
 const EVENT_PAGE_SIZE = 100
+
+const eventStatusStyles = {
+  待审核: 'bg-amber-50 text-amber-700 border-amber-100',
+  待补资料: 'bg-orange-50 text-orange-700 border-orange-100',
+  已通过: 'bg-green-50 text-green-700 border-green-100',
+  待处理: 'bg-red-50 text-red-700 border-red-100',
+  处理中: 'bg-blue-50 text-blue-700 border-blue-100',
+  已回访: 'bg-green-50 text-green-700 border-green-100',
+}
+
+const priorityStyles = {
+  高: 'bg-red-50 text-red-700 border-red-100',
+  中: 'bg-amber-50 text-amber-700 border-amber-100',
+  低: 'bg-gray-50 text-text-secondary border-border',
+}
+
+function EventPill({ children, className = '' }) {
+  return (
+    <span className={`inline-flex h-5 items-center rounded-full border px-2 text-[10px] font-semibold leading-none ${className}`}>
+      {children}
+    </span>
+  )
+}
+
+EventPill.propTypes = {
+  children: PropTypes.node.isRequired,
+  className: PropTypes.string,
+}
+
+function getApplicationMeta(item) {
+  return {
+    code: item.id.toUpperCase(),
+    status: item.status,
+    priority: item.status === '待审核' ? '中' : '低',
+    subject: item.name,
+    summary: item.experience,
+    relation: `护理师申请 · ${item.area}`,
+    assignee: '准入运营',
+    sla: item.status === '待审核' ? '今日 18:00 前审核' : '待候选人补充',
+    source: '小程序报名',
+    risk: item.status === '待审核' ? '资质准入' : '材料缺口',
+  }
+}
+
+function getComplaintMeta(item) {
+  return {
+    code: item.id.toUpperCase(),
+    status: item.status,
+    priority: item.status === '待处理' ? '高' : '中',
+    subject: item.owner,
+    summary: item.reason,
+    relation: `关联 ${item.target}`,
+    assignee: item.status === '待处理' ? '待认领' : '客诉运营',
+    sla: item.status === '待处理' ? '2 小时内首次响应' : '今日内回访闭环',
+    source: '用户投诉',
+    risk: item.target.includes('order') ? '服务体验' : '商品交付',
+  }
+}
+
+function getReminderMeta(order) {
+  const statusLabel = order.attention.priority === 0 ? '待内部确认' : order.status === 'pending' ? '待处理' : '处理中'
+  return {
+    code: order.id.toUpperCase(),
+    status: statusLabel,
+    priority: order.attention.priority === 0 ? '中' : '高',
+    subject: getServiceLabel(order),
+    summary: `${order.petName} · ${order.attention.text}`,
+    relation: `订单 ${order.id}`,
+    assignee: order.caretakerName || '待分配护理师',
+    sla: order.attention.priority === 0 ? '今日补齐报告' : '已超预约时间',
+    source: '系统提醒',
+    risk: order.attention.priority === 0 ? '报告缺失' : '履约超时',
+  }
+}
 
 export default function OperatorDashboard() {
   const { products, orders, addProduct, updateProduct, deleteProduct, addToast } = useStore()
@@ -257,6 +332,56 @@ export default function OperatorDashboard() {
     setEventDetail(null)
   }
 
+  const openEventDetail = (type, item) => {
+    setEventDetail({ type, item })
+  }
+
+  const handleInlineEventAction = (event, callback) => {
+    event.stopPropagation()
+    callback()
+  }
+
+  const renderEventCard = ({ type, item, meta, primaryAction, secondaryAction, extra }) => (
+    <div
+      key={item.id}
+      onClick={() => openEventDetail(type, item)}
+      className="block w-full px-4 py-3 text-left active:bg-bg cursor-pointer"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-semibold text-text">{meta.subject}</span>
+            <EventPill className={eventStatusStyles[meta.status] || eventStatusStyles['待处理']}>{meta.status}</EventPill>
+            <EventPill className={priorityStyles[meta.priority] || priorityStyles['中']}>{meta.priority}优先</EventPill>
+          </div>
+          <div className="mt-1 text-xs text-text-secondary">{meta.summary}</div>
+          <div className="mt-2 grid gap-1 text-[11px] text-text-tertiary sm:grid-cols-2">
+            <span className="truncate">编号 {meta.code}</span>
+            <span className="truncate">{meta.relation}</span>
+            <span className="truncate">SLA {meta.sla}</span>
+            <span className="truncate">处理人 {meta.assignee}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <EventPill className="border-border bg-bg text-text-secondary">{meta.source}</EventPill>
+            <EventPill className="border-border bg-bg text-text-secondary">{meta.risk}</EventPill>
+            {extra}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={(event) => handleInlineEventAction(event, () => openEventDetail(type, item))}
+          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-primary active:bg-primary-50 cursor-pointer"
+        >
+          详情
+        </button>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {secondaryAction}
+        {primaryAction}
+      </div>
+    </div>
+  )
+
   return (
     <>
       <Layout title="宠管家 · 运营">
@@ -328,69 +453,98 @@ export default function OperatorDashboard() {
               {visibleEventItems.length === 0 ? (
                 <div className="py-8 text-center text-sm text-text-tertiary">当前没有需要处理的{activeEvent.label}</div>
               ) : activeEventType === 'applications' ? (
-                visibleEventItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setEventDetail({ type: 'applications', item })}
-                    className="block w-full px-4 py-3 text-left active:bg-bg cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-text">{item.name}</div>
-                        <div className="mt-1 text-xs text-text-secondary">{item.experience}</div>
-                        <div className="mt-1 text-[11px] text-text-tertiary">{item.area} · {item.status}</div>
-                      </div>
-                      <span className="shrink-0 text-[11px] text-primary">详情</span>
-                    </div>
-                  </button>
-                ))
+                visibleEventItems.map((item) => renderEventCard({
+                  type: 'applications',
+                  item,
+                  meta: getApplicationMeta(item),
+                  secondaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => updateApplicationStatus(item.id, '待补资料'))}
+                      className="btn-default flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-medium active:opacity-80 cursor-pointer"
+                    >
+                      <FileText size={13} />
+                      补资料
+                    </button>
+                  ),
+                  primaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => updateApplicationStatus(item.id, '已通过'))}
+                      className="btn-primary flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold active:opacity-80 cursor-pointer"
+                    >
+                      <CheckCircle2 size={13} />
+                      通过
+                    </button>
+                  ),
+                  extra: <EventPill className="border-blue-100 bg-blue-50 text-blue-700">待资质核验</EventPill>,
+                }))
               ) : activeEventType === 'complaints' ? (
-                visibleEventItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setEventDetail({ type: 'complaints', item })}
-                    className="block w-full px-4 py-3 text-left active:bg-bg cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-text">{item.owner}</div>
-                        <div className="mt-1 text-xs text-text-secondary">{item.reason}</div>
-                        <div className="mt-1 text-[11px] text-text-tertiary">{item.target} · {item.status}</div>
-                      </div>
-                      <span className="shrink-0 text-[11px] text-primary">详情</span>
-                    </div>
-                  </button>
-                ))
+                visibleEventItems.map((item) => renderEventCard({
+                  type: 'complaints',
+                  item,
+                  meta: getComplaintMeta(item),
+                  secondaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => updateComplaintStatus(item.id, '处理中'))}
+                      className="btn-default flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-medium active:opacity-80 cursor-pointer"
+                    >
+                      <PhoneCall size={13} />
+                      跟进中
+                    </button>
+                  ),
+                  primaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => updateComplaintStatus(item.id, '已回访'))}
+                      className="btn-primary flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold active:opacity-80 cursor-pointer"
+                    >
+                      <CheckCircle2 size={13} />
+                      已回访
+                    </button>
+                  ),
+                  extra: item.status === '待处理' ? <EventPill className="border-red-100 bg-red-50 text-red-700">需首次响应</EventPill> : null,
+                }))
               ) : (
-                visibleEventItems.map((order) => (
-                  <button
-                    key={order.id}
-                    type="button"
-                    onClick={() => setEventDetail({ type: 'reminders', item: order })}
-                    className="block w-full px-4 py-3 text-left active:bg-bg cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-text">{getServiceLabel(order)}</span>
-                          <StatusBadge status={order.status} />
-                        </div>
-                        <div className="mt-1 text-xs text-text-secondary">{order.petName} · {order.attention.text}</div>
-                        <div className="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] text-text-tertiary">
-                          <Clock size={12} className="shrink-0" />
-                          <span className="truncate">{order.scheduledAt}</span>
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-sm font-semibold text-text">¥{order.price}</div>
-                        <div className="mt-1 text-[11px] text-text-tertiary">{order.caretakerName || '待接单'}</div>
-                        <div className="mt-2 text-[11px] text-primary">详情</div>
-                      </div>
-                    </div>
-                  </button>
-                ))
+                visibleEventItems.map((order) => renderEventCard({
+                  type: 'reminders',
+                  item: order,
+                  meta: getReminderMeta(order),
+                  secondaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => {
+                        addToast('已通知护理师确认履约进度', 'success')
+                      })}
+                      className="btn-default flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-medium active:opacity-80 cursor-pointer"
+                    >
+                      <Send size={13} />
+                      提醒护理师
+                    </button>
+                  ),
+                  primaryAction: (
+                    <button
+                      type="button"
+                      onClick={(event) => handleInlineEventAction(event, () => {
+                        addToast('已升级给值班运营负责人', 'success')
+                      })}
+                      className="btn-primary flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold active:opacity-80 cursor-pointer"
+                    >
+                      <ShieldAlert size={13} />
+                      升级
+                    </button>
+                  ),
+                  extra: (
+                    <>
+                      <EventPill className="border-border bg-bg text-text-secondary">¥{order.price}</EventPill>
+                      <EventPill className="border-border bg-bg text-text-secondary">
+                        <Clock size={10} className="mr-1" />
+                        {order.scheduledAt}
+                      </EventPill>
+                    </>
+                  ),
+                }))
               )}
             </div>
             {hasMoreEventItems && (

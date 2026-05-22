@@ -4,7 +4,7 @@ import Layout from '../../components/Layout'
 import ProductArt from '../../components/ProductArt'
 import { useCart } from '../../hooks/useCart'
 import { deliveryTypes, getDeliveryDesc, getDeliveryFee } from '../../data/shop'
-import { Trash2, Minus, Plus, DoorOpen, Truck, ShoppingBag, X } from 'lucide-react'
+import { Trash2, Minus, Plus, DoorOpen, Truck, ShoppingBag } from 'lucide-react'
 
 const productCategoryColors = {
   cat_food: { from: 'from-feeding-50', to: 'to-primary-50', text: 'text-feeding' },

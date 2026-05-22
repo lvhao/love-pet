@@ -7,7 +7,7 @@ import PetAvatar from '../../components/PetAvatar'
 import StatusBadge from '../../components/StatusBadge'
 import { useStore } from '../../data/store'
 import { mockUsers, serviceTypes } from '../../data/mock'
-import { ClipboardList, TrendingUp, CheckCircle, ChevronRight, PawPrint, Clock, MapPin, Navigation } from 'lucide-react'
+import { ClipboardList, TrendingUp, CheckCircle, ChevronRight, PawPrint, Clock, MapPin } from 'lucide-react'
 
 const CURRENT_CARETAKER_ID = 'ct_1'
 const CURRENT_CARETAKER_NAME = '李姐'

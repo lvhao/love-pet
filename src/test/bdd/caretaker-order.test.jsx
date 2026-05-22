@@ -29,7 +29,8 @@ given('我已有当前服务和待接任务', () => {
 })
 
 when('我查看待接任务', () => {
-  expect(screen.getByText('待接任务')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /可接任务/ }))
+  expect(screen.getAllByText('可接任务').length).toBeGreaterThan(0)
 })
 
 then('接单入口显示为"服务中"', async () => {

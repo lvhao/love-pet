@@ -10,7 +10,7 @@ export default function Chat() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { role } = useRole()
-  const { orders, addToast } = useStore()
+  const { orders } = useStore()
   const [messages, setMessages] = useState(() => loadChat(id))
   const [input, setInput] = useState('')
   const [photoPreview, setPhotoPreview] = useState(null)

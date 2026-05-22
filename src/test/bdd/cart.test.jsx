@@ -9,7 +9,6 @@ import Shop from '../../pages/owner/Shop'
 import Cart from '../../pages/owner/Cart'
 import { mockProducts } from '../../data/shop'
 
-let cartCount = 0
 let cartSeed = []
 
 async function firstAddButton() {
@@ -18,7 +17,6 @@ async function firstAddButton() {
 }
 
 function renderShop() {
-  cartCount = 0
   cartSeed = []
   cleanup()
   localStorage.removeItem('cart')

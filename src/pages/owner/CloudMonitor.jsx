@@ -20,7 +20,7 @@ export default function CloudMonitor() {
   useEffect(() => {
     joinStream()
     return () => stop()
-  }, [])
+  }, [joinStream, stop])
 
   useEffect(() => {
     if (videoRef.current && remoteStream) {
@@ -32,7 +32,7 @@ export default function CloudMonitor() {
     if (cameraError === 'permission_denied') {
       addToast('摄像头权限被拒绝，无法观看直播', 'error')
     }
-  }, [cameraError])
+  }, [addToast, cameraError])
 
   const handleReconnect = () => {
     addToast('正在重新连接...', 'info')

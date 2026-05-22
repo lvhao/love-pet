@@ -6,7 +6,7 @@ import { RoleProvider } from '../../hooks/useRole';
 import { CartProvider } from '../../hooks/useCart';
 import Chat from '../../pages/Chat';
 
-function wrapper({ children }) {
+function wrapper() {
   return (
     <MemoryRouter initialEntries={['/owner/orders/order_1/chat']}>
       <StoreProvider>

@@ -1,3 +1,5 @@
+import { describe, it } from 'vitest'
+
 class StepRegistry {
   constructor() {
     this.givens = new Map()
