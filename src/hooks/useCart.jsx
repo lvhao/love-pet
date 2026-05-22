@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
+import { getDeliveryFee } from '../data/shop'
 
 const CartContext = createContext(null)
 
@@ -47,7 +48,7 @@ function useCartState() {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
   const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
-  const deliveryFee = deliveryType === 'door' ? 0 : (totalPrice > 99 ? 0 : 8)
+  const deliveryFee = getDeliveryFee(deliveryType, totalPrice)
   const finalPrice = totalPrice + deliveryFee
 
   return {

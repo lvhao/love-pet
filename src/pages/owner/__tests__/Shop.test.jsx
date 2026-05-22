@@ -56,4 +56,16 @@ describe('Shop', () => {
     expect(screen.getByText('皇家猫粮 室内成猫粮 2kg')).toBeInTheDocument();
     expect(screen.getByText('渴望六种鱼全猫粮 1.8kg')).toBeInTheDocument();
   });
+
+  it('shows add-to-cart animation feedback', async () => {
+    render(<Shop />, { wrapper });
+    await waitFor(() => {
+      expect(screen.getByText('皇家猫粮 室内成猫粮 2kg')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    fireEvent.click(screen.getByLabelText('添加皇家猫粮 室内成猫粮 2kg'));
+
+    expect(document.querySelector('.shop-cart-fly-item')).toBeInTheDocument();
+    expect(screen.getByLabelText('购物车')).toHaveTextContent('1');
+  });
 });

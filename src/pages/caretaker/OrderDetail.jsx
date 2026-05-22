@@ -4,7 +4,12 @@ import Layout from '../../components/Layout'
 import PetAvatar from '../../components/PetAvatar'
 import StatusBadge from '../../components/StatusBadge'
 import { useStore } from '../../data/store'
+import { serviceTypes } from '../../data/mock'
 import { AlertTriangle, MapPin, Clock, CreditCard, Video, FileText, MessageCircle } from 'lucide-react'
+
+const CURRENT_CARETAKER_ID = 'ct_1'
+const CURRENT_CARETAKER_NAME = '李姐'
+const ACTIVE_STATUSES = ['accepted', 'in_progress', 'streaming']
 
 export default function CaretakerOrderDetail() {
   const { id } = useParams()
@@ -22,13 +27,28 @@ export default function CaretakerOrderDetail() {
   }
 
   const pet = pets.find((p) => p.id === order.petId) || pets[0]
+  const serviceLabel = serviceTypes.find((service) => service.key === order.serviceType)?.label || '上门护理'
+  const hasOtherActiveOrder = orders.some((item) =>
+    item.id !== order.id &&
+    item.caretakerId === CURRENT_CARETAKER_ID &&
+    ACTIVE_STATUSES.includes(item.status)
+  )
 
-  const handleAccept = () => setConfirmAction('accept')
+  const handleAccept = () => {
+    if (hasOtherActiveOrder) {
+      addToast('请先完成当前服务，再接新任务', 'info')
+      return
+    }
+    setConfirmAction('accept')
+  }
   const handleReject = () => setConfirmAction('reject')
 
   const confirmActionHandler = () => {
     if (confirmAction === 'accept') {
-      const ok = updateOrderStatus(order.id, 'accepted')
+      const ok = updateOrderStatus(order.id, 'accepted', {
+        caretakerId: CURRENT_CARETAKER_ID,
+        caretakerName: CURRENT_CARETAKER_NAME,
+      })
       if (ok) {
         addToast('已接受订单', 'success')
       } else {
@@ -63,7 +83,7 @@ export default function CaretakerOrderDetail() {
         {/* Pet Info */}
         <div className="shop-card p-5">
           <div className="flex items-center gap-4 mb-4">
-            <PetAvatar type={pet.type} size="lg" />
+            <PetAvatar type={pet.type} photo={pet.photo} name={pet.name} size="lg" />
             <div>
               <div className="font-heading text-[17px]">{pet.name}</div>
               <div className="text-xs text-text-secondary mt-0.5">{pet.breed} · {pet.age} · {pet.weight}</div>
@@ -83,9 +103,9 @@ export default function CaretakerOrderDetail() {
           <h3 className="text-sm font-semibold text-text mb-4">服务信息</h3>
           <div className="space-y-3">
             {[
-              { Icon: CreditCard, label: '你想让护理师做什么？', value: order.serviceType === 'feeding' ? '上门喂养' : order.serviceType === 'feeding_walk' ? '喂养+遛狗' : '喂养+洗护' },
-              { Icon: Clock, label: '什么时候上门？', value: order.scheduledAt },
-              { Icon: MapPin, label: '去哪里找毛孩子？', value: order.address },
+              { Icon: CreditCard, label: '服务内容', value: serviceLabel },
+              { Icon: Clock, label: '上门时间', value: order.scheduledAt },
+              { Icon: MapPin, label: '上门地址', value: order.address },
               { Icon: CreditCard, label: '服务费用', value: `¥${order.price}`, highlight: true },
             ].map(({ Icon, label, value, highlight }) => (
               <div key={label} className="flex items-center gap-3">
@@ -105,10 +125,21 @@ export default function CaretakerOrderDetail() {
           </div>
 
           {order.status === 'pending' && (
-            <div className="flex gap-3">
+            <div className="space-y-3">
+              {hasOtherActiveOrder && (
+                <div className="rounded-xl bg-primary-50 px-3 py-2 text-xs leading-5 text-primary">
+                  当前已有进行中的服务，完成后才能接受新任务。
+                </div>
+              )}
+              <div className="flex gap-3">
               <button
                 onClick={handleAccept}
-                className="flex-1 btn-primary font-semibold py-3 rounded-lg text-sm active:opacity-80 transition-opacity cursor-pointer"
+                disabled={hasOtherActiveOrder}
+                className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-opacity ${
+                  hasOtherActiveOrder
+                    ? 'cursor-not-allowed bg-border text-text-tertiary'
+                    : 'btn-primary active:opacity-80 cursor-pointer'
+                }`}
               >
                 接受订单
               </button>
@@ -118,6 +149,7 @@ export default function CaretakerOrderDetail() {
               >
                 拒绝订单
               </button>
+              </div>
             </div>
           )}
 
@@ -215,7 +247,7 @@ export default function CaretakerOrderDetail() {
             </h3>
             <p className="text-sm text-text-secondary mb-5">
               {confirmAction === 'accept'
-                ? '确认接受此订单？接受后请按时上门服务。'
+                ? '确认接受此订单？接受后它会成为你的当前服务。'
                 : '确认拒绝此订单？拒绝后订单将返回待接单池。'}
             </p>
             <div className="flex gap-3">

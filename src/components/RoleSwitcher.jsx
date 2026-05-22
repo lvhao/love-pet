@@ -18,12 +18,12 @@ export default function RoleSwitcher() {
   }
 
   return (
-    <div className="role-switcher mx-4 my-3 p-1 rounded-full flex gap-1">
+    <div className="role-switcher mx-4 my-3 p-1 rounded-2xl flex gap-1">
       {roles.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => handleTabClick(key)}
-          className={`flex-1 py-1.5 text-xs rounded-full transition-all cursor-pointer ${
+          className={`flex-1 py-2 text-xs rounded-xl transition-all cursor-pointer ${
             role === key
               ? 'shop-chip-active'
               : 'shop-chip-idle text-text-secondary'

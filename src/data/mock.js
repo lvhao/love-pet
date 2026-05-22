@@ -16,6 +16,11 @@ export const mockUsers = {
     completedOrders: 326,
     specialties: ['猫', '狗', '小型异宠'],
     bio: '5年宠物护理经验，擅长老年犬猫照护',
+    currentLocation: {
+      label: '西湖区文三路',
+      lat: 30.2809,
+      lng: 120.1301,
+    },
   },
 }
 
@@ -28,7 +33,7 @@ export const mockPets = [
     breed: '英短蓝猫',
     age: '3岁',
     weight: '4.5kg',
-    photo: '',
+    photo: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=240&q=80',
     notes: '挑食，只吃皇家猫粮；胆小，不要强行抱',
     vaccine: true,
   },
@@ -40,7 +45,7 @@ export const mockPets = [
     breed: '柯基',
     age: '2岁',
     weight: '12kg',
-    photo: '',
+    photo: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=240&q=80',
     notes: '需要遛20分钟以上；会拆家，注意关好卧室门',
     vaccine: true,
   },
@@ -61,6 +66,7 @@ export const mockOrders = [
     status: 'streaming',
     scheduledAt: '2026-05-17 18:00',
     address: '杭州市西湖区文三路xx小区3栋502',
+    location: { lat: 30.2798, lng: 120.1316, area: '西湖区文三路' },
     price: 89,
     petName: '团子',
     caretakerName: '李姐',
@@ -74,7 +80,8 @@ export const mockOrders = [
     serviceType: 'feeding_walk',
     status: 'pending',
     scheduledAt: '2026-05-18 09:00',
-    address: '杭州市西湖区文三路xx小区3栋502',
+    address: '杭州市西湖区古翠路88号2栋1102',
+    location: { lat: 30.2865, lng: 120.1262, area: '西湖区古翠路' },
     price: 129,
     petName: '旺财',
     caretakerName: null,
@@ -89,6 +96,7 @@ export const mockOrders = [
     status: 'completed',
     scheduledAt: '2026-05-16 18:00',
     address: '杭州市西湖区文三路xx小区3栋502',
+    location: { lat: 30.2798, lng: 120.1316, area: '西湖区文三路' },
     price: 89,
     petName: '团子',
     caretakerName: '李姐',
@@ -97,15 +105,16 @@ export const mockOrders = [
   {
     id: 'order_4',
     ownerId: 'owner_1',
-    caretakerId: 'ct_1',
+    caretakerId: null,
     petId: 'pet_2',
     serviceType: 'feeding_walk',
-    status: 'accepted',
+    status: 'pending',
     scheduledAt: '2026-05-19 10:00',
-    address: '杭州市西湖区文三路xx小区3栋502',
+    address: '杭州市滨江区网商路699号A座1201',
+    location: { lat: 30.1889, lng: 120.1906, area: '滨江区网商路' },
     price: 129,
     petName: '旺财',
-    caretakerName: '李姐',
+    caretakerName: null,
     reportId: null,
   },
   {
@@ -114,14 +123,25 @@ export const mockOrders = [
     caretakerId: 'ct_1',
     petId: 'pet_1',
     serviceType: 'feeding_grooming',
-    status: 'in_progress',
+    status: 'completed',
     scheduledAt: '2026-05-20 14:00',
     address: '杭州市西湖区文三路xx小区3栋502',
+    location: { lat: 30.2798, lng: 120.1316, area: '西湖区文三路' },
     price: 169,
     petName: '团子',
     caretakerName: '李姐',
     reportId: null,
   },
+]
+
+export const mockCaretakerApplications = [
+  { id: 'app_1', name: '王阿姨', experience: '3年猫狗上门喂养经验', area: '西湖区', status: '待审核' },
+  { id: 'app_2', name: '陈师傅', experience: '宠物店洗护师，擅长小型犬', area: '滨江区', status: '待补资料' },
+]
+
+export const mockComplaints = [
+  { id: 'cmp_1', owner: '小明', target: 'order_5', reason: '服务报告照片不完整', status: '待处理' },
+  { id: 'cmp_2', owner: '林女士', target: '商品配送', reason: '上门配送时间未同步', status: '处理中' },
 ]
 
 export const mockReport = {

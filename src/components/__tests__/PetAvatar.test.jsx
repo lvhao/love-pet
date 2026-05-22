@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import PetAvatar from '../PetAvatar';
 
 describe('PetAvatar', () => {
@@ -45,5 +45,12 @@ describe('PetAvatar', () => {
     const { container } = render(<PetAvatar size="lg" />);
     expect(container.firstChild.className).toContain('w-14');
     expect(container.firstChild.className).toContain('h-14');
+  });
+
+  it('renders pet photo when provided', () => {
+    render(<PetAvatar type="cat" photo="https://example.com/cat.jpg" name="团子" />);
+    const image = screen.getByAltText('团子');
+    expect(image).toHaveAttribute('src', 'https://example.com/cat.jpg');
+    expect(image.className).toContain('object-cover');
   });
 });

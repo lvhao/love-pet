@@ -1,17 +1,16 @@
-import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
+import ThemeToggle from '../../components/ThemeToggle'
 import { useStore } from '../../data/store'
 import { mockOperator } from '../../data/shop'
-import { ChevronRight, Package, BarChart3, Settings, HelpCircle, Info } from 'lucide-react'
+import { ChevronRight, Settings, HelpCircle, Info, Bell, ShieldCheck } from 'lucide-react'
 
 export default function OperatorProfile() {
-  const navigate = useNavigate()
   const { addToast } = useStore()
 
   const menuItems = [
-    { Icon: Package, label: '商品管理', action: () => navigate('/operator') },
-    { Icon: BarChart3, label: '销售数据', action: () => addToast('销售数据功能即将上线') },
+    { Icon: Bell, label: '消息通知', action: () => addToast('消息通知功能即将上线') },
+    { Icon: ShieldCheck, label: '权限与安全', action: () => addToast('权限设置功能即将上线') },
     { Icon: Settings, label: '系统设置', action: () => addToast('系统设置功能即将上线') },
     { Icon: HelpCircle, label: '帮助中心', action: () => addToast('帮助中心即将上线') },
     { Icon: Info, label: '关于宠管家', action: () => addToast('关于页面即将上线') },
@@ -33,6 +32,7 @@ export default function OperatorProfile() {
           </div>
 
           <div className="shop-card divide-y divide-border overflow-hidden">
+            <ThemeToggle />
             {menuItems.map(({ Icon, label, action }) => (
               <button
                 key={label}

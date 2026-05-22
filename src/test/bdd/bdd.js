@@ -8,8 +8,10 @@ class StepRegistry {
   _match(registry, text) {
     for (const [pattern, fn] of registry) {
       if (typeof pattern === 'string' && pattern === text) return { fn, args: [] }
-      const match = text.match(pattern)
-      if (match) return { fn, args: match.slice(1) }
+      if (pattern instanceof RegExp) {
+        const match = text.match(pattern)
+        if (match) return { fn, args: match.slice(1) }
+      }
     }
     return null
   }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
+import ThemeToggle from '../../components/ThemeToggle'
 import { useStore } from '../../data/store'
 import { useRole } from '../../hooks/useRole'
 import { ChevronRight, ClipboardList, PawPrint, Gift, MapPin, HelpCircle, Info, LogOut, Edit3, X } from 'lucide-react'
@@ -16,11 +17,11 @@ export default function OwnerProfile() {
 
   const menuItems = [
     { Icon: ClipboardList, label: '我的订单', path: '/owner/orders' },
-    { Icon: PawPrint, label: '我的宠物', path: '/owner/pets' },
+    { Icon: PawPrint, label: '宠物资料', path: '/owner/pets' },
     { Icon: Gift, label: '优惠券', action: () => addToast('优惠券功能即将上线') },
-    { Icon: MapPin, label: '地址管理', path: '/owner/addresses' },
+    { Icon: MapPin, label: '常用地址', path: '/owner/addresses' },
     { Icon: HelpCircle, label: '帮助中心', action: () => addToast('帮助中心即将上线') },
-    { Icon: Info, label: '关于宠上门', action: () => addToast('关于页面即将上线') },
+    { Icon: Info, label: '关于宠管家', action: () => addToast('关于页面即将上线') },
   ]
 
   const handleLogout = () => {
@@ -59,6 +60,7 @@ export default function OwnerProfile() {
           </div>
 
           <div className="shop-card divide-y divide-border overflow-hidden">
+            <ThemeToggle />
             {menuItems.map(({ Icon, label, path, action }) => (
               <button
                 key={label}

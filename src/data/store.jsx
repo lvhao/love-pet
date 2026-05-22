@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react'
 import { mockPets, mockOrders, mockAddresses, mockReport } from './mock'
-import { mockProducts } from './shop'
+import { getDeliveryFee, mockProducts } from './shop'
 
 // ---------------------------------------------------------------------------
 // Deep clone helper – ensures we never mutate the original mock arrays
@@ -124,11 +124,11 @@ function reducer(state, action) {
       return { ...state, orders: [...state.orders, action.payload] }
 
     case ACTION.UPDATE_ORDER_STATUS: {
-      const { orderId, status } = action.payload
+      const { orderId, status, patch = {} } = action.payload
       return {
         ...state,
         orders: state.orders.map((o) =>
-          o.id === orderId ? { ...o, status } : o
+          o.id === orderId ? { ...o, status, ...patch } : o
         ),
       }
     }
@@ -338,13 +338,13 @@ export function StoreProvider({ children }) {
     return newOrder
   }, [])
 
-  const updateOrderStatus = useCallback((orderId, nextStatus) => {
+  const updateOrderStatus = useCallback((orderId, nextStatus, patch = {}) => {
     // We validate inside the reducer as well, but we also guard here so
     // callers can be informed if the transition is invalid.
     const order = state.orders.find((o) => o.id === orderId)
     if (!order) return false
     if (!isValidTransition(order.status, nextStatus)) return false
-    dispatch({ type: ACTION.UPDATE_ORDER_STATUS, payload: { orderId, status: nextStatus } })
+    dispatch({ type: ACTION.UPDATE_ORDER_STATUS, payload: { orderId, status: nextStatus, patch } })
     return true
   }, [state.orders])
 
@@ -460,7 +460,7 @@ export function StoreProvider({ children }) {
   const deliveryType = state.cart.deliveryType
   const totalItems = cartItems.reduce((sum, i) => sum + i.quantity, 0)
   const totalPrice = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
-  const deliveryFee = deliveryType === 'door' ? 0 : (totalPrice > 99 ? 0 : 8)
+  const deliveryFee = getDeliveryFee(deliveryType, totalPrice)
   const finalPrice = totalPrice + deliveryFee
 
   // -- Context value --------------------------------------------------------

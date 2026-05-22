@@ -8,15 +8,9 @@ import StatusBadge from '../../components/StatusBadge'
 import Skeleton from '../../components/Skeleton'
 import { useStore } from '../../data/store'
 import { serviceTypes } from '../../data/mock'
-import { UtensilsCrossed, Dog, ShowerHead, Video, ChevronRight, ShieldCheck } from 'lucide-react'
-import Logo from '../../components/Logo'
+import { UtensilsCrossed, Dog, ShowerHead, ChevronRight, ShieldCheck, ClipboardCheck, Video } from 'lucide-react'
 
 const serviceIcons = { feeding: UtensilsCrossed, feeding_walk: Dog, feeding_grooming: ShowerHead }
-const serviceColors = {
-  feeding: { bg: 'bg-feeding', light: 'bg-feeding-50' },
-  feeding_walk: { bg: 'bg-walking', light: 'bg-walking-50' },
-  feeding_grooming: { bg: 'bg-grooming', light: 'bg-grooming-50' },
-}
 
 export default function OwnerHome() {
   const navigate = useNavigate()
@@ -35,79 +29,91 @@ export default function OwnerHome() {
     return pet ? pet.type : 'cat'
   }
 
+  const getPetPhoto = (order) => {
+    const pet = pets.find(p => p.id === order.petId)
+    return pet?.photo || ''
+  }
+
   return (
     <>
       <Layout title="宠管家">
         <RoleSwitcher />
 
-        {/* Hero */}
-        <div className="shop-promo mx-4 mt-3 relative overflow-hidden">
-          <div className="shop-art-orbit shop-art-orbit-one" />
-          <div className="shop-art-orbit shop-art-orbit-two" />
-          <div className="flex items-center gap-2">
-            <Logo size="sm" />
-            <span className="text-[22px] font-semibold shop-price">宠管家</span>
-          </div>
-          <p className="text-[13px] text-text-secondary mt-1">让你看见爱在发生</p>
-          <button
-            onClick={() => navigate('/owner/order/new')}
-            className="mt-4 btn-primary font-medium px-5 py-2 rounded-lg text-[14px] active:opacity-80 transition-opacity cursor-pointer card-shadow-sm"
-          >
-            立即下单
-          </button>
-        </div>
-
-        {/* Trust */}
-        <div className="mx-4 mt-4 flex items-center gap-3 text-[12px] text-text-secondary">
-          <div className="shop-chip-idle flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <Video size={13} className="text-primary" />
-            <span>实时看护</span>
-          </div>
-          <div className="shop-chip-idle flex items-center gap-1.5 rounded-full px-3 py-1.5">
-            <ShieldCheck size={13} className="text-primary" />
-            <span>专业SOP服务</span>
-          </div>
+        {/* Brand Promise */}
+        <div className="px-4 mt-4">
+          <section className="shop-promo">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[12px] font-medium text-primary">宠管家上门护理</div>
+                <h2 className="mt-1 text-[19px] font-semibold leading-snug text-text">
+                  上门放心，过程看得见
+                </h2>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-text-secondary">
+                  护理师身份核验，按流程服务，完成后留下图文记录。
+                </p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50">
+                <ShieldCheck size={21} className="text-primary" strokeWidth={1.8} />
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
+              {[
+                { Icon: ShieldCheck, label: '身份核验' },
+                { Icon: Video, label: '过程追踪' },
+                { Icon: ClipboardCheck, label: '图文记录' },
+              ].map(({ Icon, label }) => (
+                <div key={label} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-secondary">
+                  <Icon size={13} className="text-primary" strokeWidth={1.9} />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* Service Types */}
         <div className="px-4 mt-6">
-          <h3 className="text-[17px] font-semibold">今天需要什么帮助？</h3>
-          {loading ? (
-            <div className="mt-3 space-y-2">
-              <Skeleton.Card />
-              <Skeleton.Card />
-              <Skeleton.Card />
+          <section className="order-section p-4">
+            <div>
+              <h3 className="text-base font-semibold text-text">选择上门服务</h3>
+              <p className="mt-0.5 text-xs text-text-tertiary">先选服务，下一步确认宠物、地址和上门时间</p>
             </div>
-          ) : (
-            <div className="mt-3 space-y-2">
-              {serviceTypes.map((s, i) => {
-                const Icon = serviceIcons[s.key]
-                const colors = serviceColors[s.key]
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => navigate('/owner/order/new', { state: { serviceType: s.key } })}
-                    className={`shop-card w-full p-3.5 flex items-center gap-3.5 active:opacity-85 transition-opacity cursor-pointer stagger-${i + 1}`}
-                  >
-                    <div className={`w-10 h-10 rounded-lg ${colors.bg} flex items-center justify-center`}>
-                      <Icon size={18} className="text-white" strokeWidth={2} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="text-[14px] font-medium">{s.label}</div>
-                      <div className="text-[12px] text-text-secondary">{s.desc}</div>
-                    </div>
-                    <div className="text-[14px] font-semibold text-text">¥{s.price}<span className="text-[10px] text-text-tertiary">/次</span></div>
-                    <ChevronRight size={14} className="text-text-tertiary" />
-                  </button>
-                )
-              })}
-            </div>
-          )}
+            {loading ? (
+              <div className="mt-3 space-y-2">
+                <Skeleton.Card />
+                <Skeleton.Card />
+                <Skeleton.Card />
+              </div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {serviceTypes.map((s, i) => {
+                  const Icon = serviceIcons[s.key]
+                  return (
+                    <button
+                      key={s.key}
+                      onClick={() => navigate('/owner/order/new', { state: { serviceType: s.key } })}
+                      className={`order-option w-full rounded-2xl p-3.5 flex items-center gap-3.5 active:opacity-80 transition-all cursor-pointer stagger-${i + 1}`}
+                    >
+                      <div className="order-icon-soft w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+                        <Icon size={18} className="text-primary" strokeWidth={1.8} />
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-sm font-semibold text-text">{s.label}</div>
+                        <div className="text-xs text-text-secondary mt-0.5 leading-relaxed">{s.desc}</div>
+                      </div>
+                      <div className="text-base font-bold shop-price">¥{s.price}</div>
+                      <ChevronRight size={14} className="text-text-tertiary shrink-0" />
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </section>
         </div>
 
         {/* Active Orders */}
         <div className="px-4 mt-8 mb-6">
-          <h3 className="text-[17px] font-semibold">正在照顾中</h3>
+          <h3 className="text-[17px] font-semibold">订单进度</h3>
           {loading ? (
             <div className="mt-3 divide-y divide-border">
               <Skeleton.OrderRow />
@@ -115,7 +121,7 @@ export default function OwnerHome() {
             </div>
           ) : activeOrders.length === 0 ? (
             <div className="text-center py-8 mt-3">
-              <div className="text-[13px] text-text-tertiary">毛孩子们都在乖乖等着呢</div>
+              <div className="text-[13px] text-text-tertiary">暂无进行中的预约</div>
             </div>
           ) : (
             <div className="shop-card mt-3 divide-y divide-border overflow-hidden">
@@ -125,7 +131,7 @@ export default function OwnerHome() {
                   onClick={() => navigate(`/owner/order/${order.id}`)}
                   className="w-full py-3 px-4 text-left flex items-center gap-3 active:opacity-60 transition-opacity cursor-pointer first:rounded-t-xl last:rounded-b-xl"
                 >
-                  <PetAvatar type={getPetType(order)} size="sm" />
+                  <PetAvatar type={getPetType(order)} photo={getPetPhoto(order)} name={order.petName} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[14px] font-medium">{order.petName}</span>

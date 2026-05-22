@@ -109,10 +109,10 @@ describe('useCart', () => {
     expect(result.current.deliveryFee).toBe(0);
   });
 
-  it('deliveryFee is 0 for express when totalPrice > 99', () => {
+  it('deliveryFee is 0 for express when totalPrice >= 99', () => {
     const { result } = renderHook(() => useCart(), { wrapper });
     act(() => {
-      result.current.addItem({ id: 'prod_1', name: 'Cat Food', price: 168 });
+      result.current.addItem({ id: 'prod_1', name: 'Cat Food', price: 99 });
       result.current.setDeliveryType('express');
     });
     expect(result.current.deliveryFee).toBe(0);

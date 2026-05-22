@@ -17,7 +17,11 @@ export default function Shop() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const debounceTimer = useRef(null)
+  const cartButtonRef = useRef(null)
+  const animationTimer = useRef(null)
   const [loading, setLoading] = useState(true)
+  const [flyItem, setFlyItem] = useState(null)
+  const [cartBump, setCartBump] = useState(false)
 
   // Simulated loading state
   useEffect(() => {
@@ -40,22 +44,51 @@ export default function Shop() {
     }
   }, [search])
 
+  useEffect(() => {
+    return () => {
+      if (animationTimer.current) {
+        clearTimeout(animationTimer.current)
+      }
+    }
+  }, [])
+
   const filtered = products.filter((p) => {
     const matchCat = category === 'all' || p.category === category
     const matchSearch = !debouncedSearch || p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
     return matchCat && matchSearch
   })
 
+  const handleAddToCart = (event, product) => {
+    event.stopPropagation()
+    addItem(product)
+
+    const sourceRect = event.currentTarget.getBoundingClientRect()
+    const targetRect = cartButtonRef.current?.getBoundingClientRect()
+    if (!targetRect) return
+
+    if (animationTimer.current) {
+      clearTimeout(animationTimer.current)
+    }
+
+    setFlyItem({
+      id: `${product.id}-${Date.now()}`,
+      fromX: sourceRect.left + sourceRect.width / 2,
+      fromY: sourceRect.top + sourceRect.height / 2,
+      toX: targetRect.left + targetRect.width / 2,
+      toY: targetRect.top + targetRect.height / 2,
+    })
+    setCartBump(false)
+
+    animationTimer.current = setTimeout(() => {
+      setFlyItem(null)
+      setCartBump(true)
+      animationTimer.current = setTimeout(() => setCartBump(false), 240)
+    }, 520)
+  }
+
   return (
     <>
-      <Layout title="宠管家商城" right={
-        <button onClick={() => navigate('/owner/cart')} className="shop-cart-button relative w-8 h-8 flex items-center justify-center cursor-pointer" aria-label="购物车">
-          <ShoppingCart size={18} className="text-text" />
-          {totalItems > 0 && (
-            <span className="shop-cart-count absolute -top-0.5 -right-0.5 w-4 h-4 text-white text-[11px] font-bold rounded-full flex items-center justify-center">{totalItems}</span>
-          )}
-        </button>
-      }>
+      <Layout title="宠管家商城">
         <div className="shop-page">
         {/* Search */}
         <div className="px-4 pt-3">
@@ -82,12 +115,12 @@ export default function Shop() {
         </div>
 
         {/* Categories */}
-        <div className="px-4 mt-4 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="shop-chip-wrap px-4 mt-4">
           {productCategories.map((c) => (
             <button
               key={c.key}
               onClick={() => setCategory(c.key)}
-              className={`shop-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap active:opacity-70 transition-all cursor-pointer ${
+              className={`shop-chip px-4 py-2 rounded-full text-xs font-semibold active:opacity-70 transition-all cursor-pointer ${
                 category === c.key
                   ? 'shop-chip-active'
                   : 'shop-chip-idle text-text-secondary'
@@ -131,7 +164,7 @@ export default function Shop() {
                       </span>
                     )}
                     {product.tags?.includes('新品') && (
-                      <span className="shop-badge shop-badge-new absolute top-2.5 left-2.5 text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-0.5">
+                      <span className={`shop-badge shop-badge-new absolute ${product.tags?.includes('热销') ? 'top-10' : 'top-2.5'} left-2.5 text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-0.5`}>
                         <Sparkles size={8} /> 新品
                       </span>
                     )}
@@ -148,7 +181,7 @@ export default function Shop() {
                         <span className="text-[11px] text-text-tertiary line-through ml-1">¥{product.originalPrice}</span>
                       </div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); addItem(product) }}
+                        onClick={(e) => handleAddToCart(e, product)}
                         className="shop-add-button w-8 h-8 min-h-[32px] min-w-[32px] rounded-full flex items-center justify-center active:opacity-70 transition-opacity cursor-pointer"
                         aria-label={`添加${product.name}`}
                       >
@@ -164,6 +197,29 @@ export default function Shop() {
         </div>
         </div>
       </Layout>
+      <button
+        ref={cartButtonRef}
+        onClick={() => navigate('/owner/cart')}
+        className={`shop-floating-cart fixed z-40 flex h-12 w-12 items-center justify-center rounded-full active:opacity-80 transition-opacity cursor-pointer ${cartBump ? 'shop-floating-cart-bump' : ''}`}
+        aria-label="购物车"
+      >
+        <ShoppingCart size={20} className="shop-floating-cart-icon text-white" />
+        {totalItems > 0 && (
+          <span className="shop-cart-count absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white">{totalItems}</span>
+        )}
+      </button>
+      {flyItem && (
+        <span
+          key={flyItem.id}
+          className="shop-cart-fly-item fixed z-[60] h-4 w-4 rounded-full"
+          style={{
+            left: `${flyItem.fromX - 8}px`,
+            top: `${flyItem.fromY - 8}px`,
+            '--cart-fly-x': `${flyItem.toX - flyItem.fromX}px`,
+            '--cart-fly-y': `${flyItem.toY - flyItem.fromY}px`,
+          }}
+        />
+      )}
       <TabBar />
     </>
   )

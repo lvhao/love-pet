@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import TabBar from '../../components/TabBar'
+import ThemeToggle from '../../components/ThemeToggle'
 import { useRole } from '../../hooks/useRole'
 import { useStore } from '../../data/store'
 import { Star, ChevronRight, Briefcase, Wallet, Award, HelpCircle, Info } from 'lucide-react'
@@ -15,7 +16,7 @@ export default function CaretakerProfile() {
     { Icon: Wallet, label: '收入明细', action: () => addToast('收入明细功能即将上线', 'info') },
     { Icon: Award, label: '技能认证', action: () => addToast('技能认证功能即将上线', 'info') },
     { Icon: HelpCircle, label: '帮助中心', action: () => addToast('帮助中心即将上线', 'info') },
-    { Icon: Info, label: '关于宠上门', action: () => addToast('关于页面即将上线', 'info') },
+    { Icon: Info, label: '关于宠管家', action: () => addToast('关于页面即将上线', 'info') },
   ]
 
   return (
@@ -45,6 +46,7 @@ export default function CaretakerProfile() {
           </div>
 
           <div className="shop-card divide-y divide-border overflow-hidden">
+            <ThemeToggle />
             {menuItems.map(({ Icon, label, action }) => (
               <button
                 key={label}

@@ -30,13 +30,13 @@ describe('Layout', () => {
 
   it('shows back button when showBack is true', () => {
     render(<Layout title="测试" showBack>内容</Layout>, { wrapper });
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '返回' })).toBeInTheDocument();
   });
 
   it('calls onBack when back button is clicked', () => {
     const onBack = vi.fn();
     render(<Layout title="测试" showBack onBack={onBack}>内容</Layout>, { wrapper });
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: '返回' }));
     expect(onBack).toHaveBeenCalledOnce();
   });
 

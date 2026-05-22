@@ -8,18 +8,15 @@ import Dashboard from '../../pages/caretaker/Dashboard'
 
 const feature = `
 Feature: 照护师接单
-  作为照护师，我想接单并完成服务，以便获得收入。
+  作为照护师，我一次只处理一个当前服务，避免同时进行多单。
 
-  Scenario: 接单
-    Given 有一个新订单
-    When 我点击"接单"按钮
-    Then 订单状态变为"已接单"
+  Scenario: 当前已有服务时不能继续接单
+    Given 我已有当前服务和待接任务
+    When 我查看待接任务
+    Then 接单入口显示为"服务中"
 `
 
-let mockOrder
-
-given('有一个新订单', () => {
-  mockOrder = { id: 1, status: 'pending' }
+given('我已有当前服务和待接任务', () => {
   render(
     <BrowserRouter>
       <StoreProvider>
@@ -31,14 +28,15 @@ given('有一个新订单', () => {
   )
 })
 
-when('我点击"接单"按钮', () => {
-  const acceptButton = screen.getByRole('button', { name: '接单' })
-  fireEvent.click(acceptButton)
+when('我查看待接任务', () => {
+  expect(screen.getByText('待接任务')).toBeInTheDocument()
 })
 
-then('订单状态变为"已接单"', async () => {
+then('接单入口显示为"服务中"', async () => {
   await waitFor(() => {
-    expect(screen.getByText(/已接单/i)).toBeInTheDocument()
+    const blockedButtons = screen.getAllByRole('button', { name: '服务中' })
+    expect(blockedButtons.length).toBeGreaterThanOrEqual(1)
+    expect(blockedButtons[0]).toBeDisabled()
   })
 })
 

@@ -42,6 +42,24 @@ describe('StoreProvider - orders', () => {
     expect(updated.status).toBe('accepted');
   });
 
+  it('updateOrderStatus can persist assignment metadata', () => {
+    const { result } = renderHook(() => useStore(), { wrapper });
+    const pending = result.current.orders.find((o) => o.status === 'pending' && !o.caretakerId);
+    let success;
+    act(() => {
+      success = result.current.updateOrderStatus(pending.id, 'accepted', {
+        caretakerId: 'ct_1',
+        caretakerName: '李姐',
+      });
+    });
+    const updated = result.current.orders.find((o) => o.id === pending.id);
+
+    expect(success).toBe(true);
+    expect(updated.status).toBe('accepted');
+    expect(updated.caretakerId).toBe('ct_1');
+    expect(updated.caretakerName).toBe('李姐');
+  });
+
   it('updateOrderStatus fails for invalid transition', () => {
     const { result } = renderHook(() => useStore(), { wrapper });
     const pending = result.current.orders.find((o) => o.status === 'pending');
@@ -293,10 +311,10 @@ describe('StoreProvider - cart', () => {
     expect(result.current.deliveryFee).toBe(0);
   });
 
-  it('deliveryFee is 0 for express when totalPrice > 99', () => {
+  it('deliveryFee is 0 for express when totalPrice >= 99', () => {
     const { result } = renderHook(() => useStore(), { wrapper });
     act(() => {
-      result.current.addItem({ id: 'prod_1', name: 'Cat Food', price: 168 });
+      result.current.addItem({ id: 'prod_1', name: 'Cat Food', price: 99 });
       result.current.setDeliveryType('express');
     });
     expect(result.current.deliveryFee).toBe(0);
