@@ -1,0 +1,8 @@
+node_modules
+.git
+.vercel
+.playwright-mcp
+coverage
+dist
+*.local
+.DS_Store
