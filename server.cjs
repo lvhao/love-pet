@@ -1,12 +1,56 @@
 const http = require('http')
+const fs = require('fs')
+const path = require('path')
 const WebSocket = require('ws')
 
 const PORT = process.env.PORT || 3001
+const DIST_DIR = path.join(__dirname, 'dist')
 
-// HTTP health-check endpoint (required by Fly.io proxy)
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.json': 'application/json',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+}
+
+function serveFile(res, filePath, mime) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' })
+      res.end('Not found')
+    } else {
+      res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': 'public, max-age=31536000, immutable' })
+      res.end(data)
+    }
+  })
+}
+
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' })
-  res.end('love-pet ok')
+  const url = new URL(req.url, `http://${req.headers.host}`)
+  const ext = path.extname(url.pathname)
+
+  if (ext && MIME[ext]) {
+    // Static asset — serve with long cache
+    serveFile(res, path.join(DIST_DIR, url.pathname), MIME[ext])
+  } else {
+    // SPA fallback — serve index.html
+    fs.readFile(path.join(DIST_DIR, 'index.html'), (err, data) => {
+      if (err) {
+        // dist/ not built yet (dev mode) — health check
+        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.end('love-pet ok')
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+        res.end(data)
+      }
+    })
+  }
 })
 
 const wss = new WebSocket.Server({ server })
@@ -64,5 +108,5 @@ wss.on('connection', (ws) => {
 })
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Signaling server running on ws://0.0.0.0:${PORT}`)
+  console.log(`Server running on http://0.0.0.0:${PORT}`)
 })
