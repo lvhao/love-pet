@@ -21,18 +21,25 @@ wss.on('connection', (ws) => {
       if (!rooms.has(roomId)) {
         rooms.set(roomId, [])
       }
-      rooms.get(roomId).push(ws)
+      const peers = rooms.get(roomId)
+      const hasExistingPeers = peers.length > 0
+      peers.push(ws)
       ws.roomId = roomId
 
-      // Notify others in room
-      rooms.get(roomId).forEach((peer) => {
+      // Notify existing peers about the newcomer
+      peers.forEach((peer) => {
         if (peer !== ws && peer.readyState === WebSocket.OPEN) {
           peer.send(JSON.stringify({ type: 'peer-joined', roomId }))
         }
       })
+
+      // Also notify the newcomer about existing peers (fixes timing deadlock)
+      if (hasExistingPeers) {
+        ws.send(JSON.stringify({ type: 'peer-joined', roomId }))
+      }
     }
 
-    if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
+    if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate' || data.type === 'chat-message') {
       const roomId = data.roomId || ws.roomId
       const peers = rooms.get(roomId)
       if (peers) {

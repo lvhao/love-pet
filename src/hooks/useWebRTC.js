@@ -27,6 +27,7 @@ export function useWebRTC(roomId) {
   const [isStreaming, setIsStreaming] = useState(false)
   const [wsStatus, setWsStatus] = useState('disconnected') // 'disconnected' | 'connecting' | 'connected' | 'error'
   const [cameraError, setCameraError] = useState(null)
+  const [chatMessages, setChatMessages] = useState([])
   const pcRef = useRef(null)
   const wsRef = useRef(null)
   const facingModeRef = useRef('environment')
@@ -127,6 +128,9 @@ export function useWebRTC(roomId) {
       if (data.type === 'ice-candidate') {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
       }
+      if (data.type === 'chat-message') {
+        setChatMessages((prev) => [...prev, { id: `chat-${Date.now()}-${Math.random()}`, from: data.from, text: data.text }])
+      }
     })
 
     setIsStreaming(true)
@@ -146,8 +150,18 @@ export function useWebRTC(roomId) {
       if (data.type === 'ice-candidate') {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
       }
+      if (data.type === 'chat-message') {
+        setChatMessages((prev) => [...prev, { id: `chat-${Date.now()}-${Math.random()}`, from: data.from, text: data.text }])
+      }
     })
   }, [roomId, createPeerConnection, setupWebSocket])
+
+  const sendChatMessage = useCallback((text, from) => {
+    if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+    const msg = { type: 'chat-message', roomId, from, text }
+    wsRef.current.send(JSON.stringify(msg))
+    setChatMessages((prev) => [...prev, { id: `chat-${Date.now()}-${Math.random()}`, from, text }])
+  }, [roomId])
 
   const flipCamera = useCallback(async () => {
     const newFacing = facingModeRef.current === 'environment' ? 'user' : 'environment'
@@ -177,6 +191,7 @@ export function useWebRTC(roomId) {
     setIsConnected(false)
     setWsStatus('disconnected')
     setCameraError(null)
+    setChatMessages([])
   }, [localStream])
 
   useEffect(() => () => {
@@ -192,6 +207,8 @@ export function useWebRTC(roomId) {
     isStreaming,
     wsStatus,
     cameraError,
+    chatMessages,
+    sendChatMessage,
     startBroadcast,
     joinStream,
     flipCamera,

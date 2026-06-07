@@ -7,14 +7,9 @@ import { X, Send, Video, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 export default function CloudMonitor() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { remoteStream, isConnected, wsStatus, cameraError, joinStream, stop } = useWebRTC(id)
+  const { remoteStream, isConnected, wsStatus, cameraError, chatMessages, sendChatMessage, joinStream, stop } = useWebRTC(id)
   const { addToast } = useStore()
   const videoRef = useRef(null)
-  const [messages, setMessages] = useState([
-    { from: 'system', text: '已进入看护模式' },
-    { from: 'caretaker', text: '我到了，团子很乖~' },
-    { from: 'caretaker', text: '正在换水' },
-  ])
   const [input, setInput] = useState('')
 
   useEffect(() => {
@@ -42,7 +37,7 @@ export default function CloudMonitor() {
 
   const sendMessage = () => {
     if (!input.trim()) return
-    setMessages((prev) => [...prev, { from: 'owner', text: input }])
+    sendChatMessage(input, 'owner')
     setInput('')
   }
 
@@ -112,20 +107,19 @@ export default function CloudMonitor() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.from === 'owner' ? 'justify-end' : msg.from === 'system' ? 'justify-center' : 'justify-start'}`}>
-              {msg.from === 'system' ? (
-                <div className="shop-chip-idle text-text-tertiary text-[11px] px-3 py-1 rounded-full">{msg.text}</div>
-              ) : (
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-lg text-sm ${
-                  msg.from === 'owner'
-                    ? 'bg-primary text-white rounded-br-md'
-                    : 'bg-[#fff1e8] text-primary rounded-bl-md'
-                }`}>
-                  {msg.from === 'caretaker' && <div className="text-[11px] text-primary/60 mb-1 font-medium">李姐</div>}
-                  {msg.text}
-                </div>
-              )}
+          {chatMessages.length === 0 && (
+            <div className="text-center text-text-tertiary text-xs py-6">暂无消息</div>
+          )}
+          {chatMessages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.from === 'owner' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[75%] px-4 py-2.5 rounded-lg text-sm ${
+                msg.from === 'owner'
+                  ? 'bg-primary text-white rounded-br-md'
+                  : 'bg-[#fff1e8] text-primary rounded-bl-md'
+              }`}>
+                {msg.from === 'caretaker' && <div className="text-[11px] text-primary/60 mb-1 font-medium">护理师</div>}
+                {msg.text}
+              </div>
             </div>
           ))}
         </div>

@@ -7,13 +7,11 @@ import { Send, Video, RotateCcw, Users, PawPrint, Wifi, WifiOff, RefreshCw } fro
 export default function LiveStream() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { localStream, isStreaming, wsStatus, cameraError, startBroadcast, flipCamera, stop } = useWebRTC(id)
+  const { localStream, isConnected, isStreaming, wsStatus, cameraError, chatMessages, sendChatMessage, startBroadcast, flipCamera, stop } = useWebRTC(id)
   const { addToast } = useStore()
   const videoRef = useRef(null)
   const [duration, setDuration] = useState(0)
-  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
-  const [viewerCount, setViewerCount] = useState(() => Math.floor(Math.random() * 5) + 1)
   const [streamStarted, setStreamStarted] = useState(false)
 
   useEffect(() => {
@@ -33,25 +31,6 @@ export default function LiveStream() {
     const timer = setInterval(() => setDuration((d) => d + 1), 1000)
     return () => clearInterval(timer)
   }, [isStreaming])
-
-  useEffect(() => {
-    if (!isStreaming) return
-    const timer = setInterval(() => {
-      setViewerCount((prev) => {
-        const delta = Math.random() > 0.5 ? 1 : -1
-        return Math.max(1, Math.min(5, prev + delta))
-      })
-    }, 8000)
-    return () => clearInterval(timer)
-  }, [isStreaming])
-
-  useEffect(() => {
-    if (!streamStarted) return
-    const timer = setTimeout(() => {
-      setMessages((prev) => [...prev, { from: 'owner', text: '团子在干嘛呀？' }])
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [streamStarted])
 
   const formatTime = (s) => {
     const m = Math.floor(s / 60)
@@ -83,7 +62,7 @@ export default function LiveStream() {
 
   const handleSend = () => {
     if (!input.trim()) return
-    setMessages((prev) => [...prev, { from: 'caretaker', text: input }])
+    sendChatMessage(input, 'caretaker')
     setInput('')
   }
 
@@ -149,7 +128,7 @@ export default function LiveStream() {
 
         {isStreaming && (
           <div className="absolute bottom-4 left-4 bg-black/40 text-white/80 px-3 py-1.5 rounded-full text-xs backdrop-blur-sm flex items-center gap-1.5">
-            <Users size={12} /> {viewerCount}人正在观看
+            <Users size={12} /> {isConnected ? '1人正在观看' : '等待观众进入'}
           </div>
         )}
 
@@ -191,14 +170,14 @@ export default function LiveStream() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-3">
-            {messages.length === 0 && (
+            {chatMessages.length === 0 && (
               <div className="text-center text-text-tertiary text-xs py-6 flex flex-col items-center gap-2">
                 <PawPrint size={24} className="text-text-tertiary" />
                 还没有消息，宠主可能在默默看着呢
               </div>
             )}
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.from === 'caretaker' ? 'justify-end' : 'justify-start'}`}>
+            {chatMessages.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.from === 'caretaker' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] px-4 py-2.5 rounded-lg text-sm ${
                   msg.from === 'caretaker'
                     ? 'bg-primary text-white rounded-br-md'
