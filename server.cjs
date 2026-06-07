@@ -1,6 +1,15 @@
+const http = require('http')
 const WebSocket = require('ws')
 
-const wss = new WebSocket.Server({ port: 3001 })
+const PORT = process.env.PORT || 3001
+
+// HTTP health-check endpoint (required by Fly.io proxy)
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' })
+  res.end('love-pet ok')
+})
+
+const wss = new WebSocket.Server({ server })
 const rooms = new Map()
 
 wss.on('connection', (ws) => {
@@ -47,4 +56,6 @@ wss.on('connection', (ws) => {
   })
 })
 
-console.log('Signaling server running on ws://localhost:3001')
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Signaling server running on ws://0.0.0.0:${PORT}`)
+})
